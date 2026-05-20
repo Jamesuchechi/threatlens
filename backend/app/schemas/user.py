@@ -40,3 +40,11 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    industry: Optional[str] = None
+    tech_stack: Optional[List[str]] = None
+    alert_email_enabled: Optional[bool] = None
+    alert_webhook_url: Optional[str] = None
+

@@ -1,40 +1,197 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  body {
-    @apply bg-darkBg text-slate-100 font-sans antialiased overflow-x-hidden;
-  }
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+:root {
+  --bg:           #080B0F;
+  --bg-2:         #0E1318;
+  --bg-3:         #141A21;
+  --bg-4:         #1C242D;
+  --red:          #E8392A;
+  --red-dim:      #C02E22;
+  --red-glow:     rgba(232, 57, 42, 0.15);
+  --amber:        #E88C2A;
+  --green:        #2AE87A;
+  --border:       rgba(255, 255, 255, 0.07);
+  --border-bright: rgba(255, 255, 255, 0.14);
+  --text:         #EDF0F3;
+  --text-2:       #8A9BAD;
+  --text-3:       #4A5A6A;
+  --mono:         'JetBrains Mono', monospace;
+  --display:      'Syne', sans-serif;
+  --body:         'DM Sans', sans-serif;
 }
-::-webkit-scrollbar-track {
-  background: #090d16;
+
+html {
+  scroll-behavior: smooth;
 }
-::-webkit-scrollbar-thumb {
-  background: #1e293b;
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Grid overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideup {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.7); }
+}
+
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ── SCROLL REVEAL ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── SHARED SECTION ── */
+section {
+  position: relative;
+  z-index: 1;
+}
+
+.section-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 100px 24px;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 16px;
+}
+
+.section-label::before {
+  content: '// ';
+}
+
+.section-title {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(32px, 4vw, 52px);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--text);
+  max-width: 600px;
+  margin-bottom: 20px;
+}
+
+.section-sub {
+  font-size: 17px;
+  font-weight: 300;
+  color: var(--text-2);
+  max-width: 520px;
+  line-height: 1.7;
+  margin-bottom: 56px;
+}
+
+/* ── BUTTONS ── */
+.btn-lg {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--red);
+  border: none;
+  cursor: pointer;
+  padding: 14px 28px;
   border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #00f2fe;
-}
-
-/* Custom Glassmorphism style */
-.glass-panel {
-  background: rgba(16, 23, 38, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.glow-hover:hover {
-  box-shadow: 0 0 20px rgba(0, 242, 254, 0.25);
-  border-color: rgba(0, 242, 254, 0.4);
+.btn-lg:hover { background: var(--red-dim); }
+
+.btn-outline {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  background: none;
+  border: 1px solid var(--border-bright);
+  cursor: pointer;
+  padding: 14px 28px;
+  border-radius: 4px;
+  transition: border-color 0.2s, color 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-outline:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── SEVERITY BADGES (shared) ── */
+.severity-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.sev-critical { background: rgba(232,57,42,0.18);  color: #E8392A; border: 1px solid rgba(232,57,42,0.3); }
+.sev-high     { background: rgba(232,140,42,0.18); color: #E88C2A; border: 1px solid rgba(232,140,42,0.3); }
+.sev-medium   { background: rgba(232,199,42,0.12); color: #E8C72A; border: 1px solid rgba(232,199,42,0.25); }
+.sev-low      { background: rgba(42,232,122,0.10); color: #2AE87A; border: 1px solid rgba(42,232,122,0.2); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .section-inner { padding: 64px 20px; }
 }

@@ -1,0 +1,45 @@
+.cta-section {
+  background: var(--bg-2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.cta-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 100px 24px;
+  text-align: center;
+}
+
+.cta-inner .section-label {
+  justify-content: center;
+  display: flex;
+}
+
+.cta-title {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(36px, 5vw, 60px);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: var(--text);
+  max-width: 680px;
+  margin: 0 auto 20px;
+}
+
+.cta-sub {
+  font-size: 17px;
+  font-weight: 300;
+  color: var(--text-2);
+  max-width: 440px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+}
+
+.cta-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}

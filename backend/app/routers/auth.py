@@ -62,3 +62,33 @@ async def login(user_in: UserLogin, db: AsyncSession = Depends(get_db)):
         token=token,
         expires_at=expires_at
     )
+
+from app.dependencies import get_current_user
+from app.schemas.user import UserResponse, UserUpdate
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.put("/me", response_model=UserResponse)
+async def update_me(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    if user_update.name is not None:
+        current_user.name = user_update.name
+    if user_update.industry is not None:
+        current_user.industry = user_update.industry
+    if user_update.tech_stack is not None:
+        current_user.tech_stack = user_update.tech_stack
+    if user_update.alert_email_enabled is not None:
+        current_user.alert_email_enabled = user_update.alert_email_enabled
+    if user_update.alert_webhook_url is not None:
+        current_user.alert_webhook_url = user_update.alert_webhook_url
+        
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
+
+

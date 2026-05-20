@@ -53,21 +53,21 @@ _Goal: A working backend that ingests real threat data and stores it. No AI yet.
 
 **Morning**
 
-- [ ] Install Python dependencies: `fastapi`, `uvicorn`, `sqlalchemy`, `asyncpg`, `alembic`, `pydantic`, `python-jose`, `bcrypt`, `httpx`, `structlog`, `slowapi`
-- [ ] Write `config.py` with Pydantic `BaseSettings` loading all env vars
-- [ ] Write `database.py` with async SQLAlchemy engine and session factory
-- [ ] Write SQLAlchemy ORM models for `User`, `Threat`, `Alert`
-- [ ] Write Pydantic schemas for request/response validation
+- [x] Install Python dependencies: `fastapi`, `uvicorn`, `sqlalchemy`, `asyncpg`, `alembic`, `pydantic`, `python-jose`, `bcrypt`, `httpx`, `structlog`, `slowapi`
+- [x] Write `config.py` with Pydantic `BaseSettings` loading all env vars
+- [x] Write `database.py` with async SQLAlchemy engine and session factory
+- [x] Write SQLAlchemy ORM models for `User`, `Threat`, `Alert`
+- [x] Write Pydantic schemas for request/response validation
 
 **Afternoon**
 
-- [ ] Implement `POST /auth/register` endpoint
-- [ ] Implement `POST /auth/login` endpoint
-- [ ] Write JWT token creation and validation utilities
-- [ ] Write `get_current_user` FastAPI dependency
-- [ ] Implement `GET /health` endpoint
-- [ ] Test auth flow manually with curl or Postman
-- [ ] Confirm Swagger UI at `localhost:8000/docs` shows all routes
+- [x] Implement `POST /auth/register` endpoint
+- [x] Implement `POST /auth/login` endpoint
+- [x] Write JWT token creation and validation utilities
+- [x] Write `get_current_user` FastAPI dependency
+- [x] Implement `GET /health` endpoint
+- [x] Test auth flow manually with curl or Postman
+- [x] Confirm Swagger UI at `localhost:8000/docs` shows all routes
 
 **End of Day 2 checkpoint:** Can register a user, log in, and receive a valid JWT. `/health` returns 200.
 
@@ -77,31 +77,32 @@ _Goal: A working backend that ingests real threat data and stores it. No AI yet.
 
 **Morning**
 
-- [ ] Sign up for NVD API key at nvd.nist.gov
-- [ ] Write `nvd_client.py`:
-  - [ ] `fetch_recent_cves(hours_back=12)` — async httpx call with pagination
-  - [ ] Response parsing → `RawThreat` Pydantic schema
-  - [ ] Exponential backoff on 429 responses (max 3 retries, 2/4/8 second delays)
-  - [ ] Unit test with mocked responses
-- [ ] Write `cisa_client.py`:
-  - [ ] `fetch_kev_catalog()` — fetch full JSON catalog
-  - [ ] `get_new_entries(known_ids: set)` — diff against existing
-  - [ ] Unit test
+- [x] Sign up for NVD API key at nvd.nist.gov
+- [x] Write `nvd_client.py`:
+  - [x] `fetch_recent_cves(hours_back=12)` — async httpx call with pagination
+  - [x] Response parsing → `RawThreat` Pydantic schema
+  - [x] Exponential backoff on 429 responses (max 3 retries, 2/4/8 second delays)
+  - [x] Unit test with mocked responses
+- [x] Write `cisa_client.py`:
+  - [x] `fetch_kev_catalog()` — fetch full JSON catalog
+  - [x] `get_new_entries(known_ids: set)` — diff against existing
+  - [x] Unit test
 
 **Afternoon**
 
-- [ ] Write `feed_ingestion.py` orchestrator:
-  - [ ] Calls both clients
-  - [ ] Normalizes to common schema
-  - [ ] Upserts to database (INSERT ... ON CONFLICT DO UPDATE)
-  - [ ] Pushes new threat IDs to Redis queue `queue:ai_processing`
-- [ ] Write `scheduler.py` with APScheduler running ingestion every 6 hours
-- [ ] Run ingestion manually and confirm threats appear in database
-- [ ] Implement `GET /threats` endpoint (no AI fields yet, just raw data)
-- [ ] Implement `GET /threats/{id}` endpoint
-- [ ] Implement `GET /threats/stats` endpoint
+- [x] Write `feed_ingestion.py` orchestrator:
+  - [x] Calls both clients
+  - [x] Normalizes to common schema
+  - [x] Upserts to database (INSERT ... ON CONFLICT DO UPDATE)
+  - [x] Pushes new threat IDs to Redis queue `queue:ai_processing`
+- [x] Write `scheduler.py` with APScheduler running ingestion every 6 hours
+- [x] Run ingestion manually and confirm threats appear in database
+- [x] Implement `GET /threats` endpoint (no AI fields yet, just raw data)
+- [x] Implement `GET /threats/{id}` endpoint
+- [x] Implement `GET /threats/stats` endpoint
 
 **End of Day 3 checkpoint:** Running ingestion manually populates 50–200 real CVEs in the database. `GET /threats` returns them via API.
+
 
 ---
 
@@ -109,26 +110,27 @@ _Goal: A working backend that ingests real threat data and stores it. No AI yet.
 
 **Morning**
 
-- [ ] Sign up for AbuseIPDB free API key
-- [ ] Write `abuseipdb_client.py`:
-  - [ ] `fetch_blacklist(confidence=90, limit=500)`
-  - [ ] Normalize IP threats to `RawThreat` schema
-- [ ] Add AbuseIPDB to ingestion orchestrator
-- [ ] Test full ingestion pipeline end-to-end
-- [ ] Add structured logging to all ingestion steps
-- [ ] Write `tests/test_ingestion.py` covering the main happy paths and error cases
+- [x] Sign up for AbuseIPDB free API key
+- [x] Write `abuseipdb_client.py`:
+  - [x] `fetch_blacklist(confidence=90, limit=500)`
+  - [x] Normalize IP threats to `RawThreat` schema
+- [x] Add AbuseIPDB to ingestion orchestrator
+- [x] Test full ingestion pipeline end-to-end
+- [x] Add structured logging to all ingestion steps
+- [x] Write `tests/test_ingestion.py` covering the main happy paths and error cases
 
 **Afternoon**
 
-- [ ] Set up React Router in frontend: install `react-router-dom`
-- [ ] Create page shell components: `Dashboard.jsx`, `ThreatDetail.jsx`, `Settings.jsx`
-- [ ] Set up Axios/fetch API service layer (`services/api.js`) pointed at backend
-- [ ] Set up Zustand store (`store/threatStore.js`) with filter state
-- [ ] Set up React Query for data fetching
-- [ ] Confirm frontend can call `GET /threats` and log results to console
-- [ ] Set up CORS in FastAPI to allow frontend origin
+- [x] Set up React Router in frontend: install `react-router-dom`
+- [x] Create page shell components: `Dashboard.jsx`, `ThreatDetail.jsx`, `Settings.jsx`
+- [x] Set up Axios/fetch API service layer (`services/api.js`) pointed at backend
+- [x] Set up Zustand store (`store/threatStore.js`) with filter state
+- [x] Set up React Query for data fetching
+- [x] Confirm frontend can call `GET /threats` and log results to console
+- [x] Set up CORS in FastAPI to allow frontend origin
 
 **End of Day 4 checkpoint:** Full ingestion pipeline works. Frontend shell exists and successfully fetches real threat data from the backend.
+
 
 ---
 
