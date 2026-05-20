@@ -92,6 +92,36 @@ async def get_threat_stats(db: AsyncSession = Depends(get_db)):
     )
     critical_res = await db.execute(critical_query)
     critical_count = critical_res.scalar() or 0
+
+    # High count
+    high_query = select(func.count(Threat.id)).where(
+        and_(
+            Threat.published_at >= seven_days_ago,
+            Threat.severity == "high"
+        )
+    )
+    high_res = await db.execute(high_query)
+    high_count = high_res.scalar() or 0
+
+    # Medium count
+    medium_query = select(func.count(Threat.id)).where(
+        and_(
+            Threat.published_at >= seven_days_ago,
+            Threat.severity == "medium"
+        )
+    )
+    medium_res = await db.execute(medium_query)
+    medium_count = medium_res.scalar() or 0
+
+    # Low count
+    low_query = select(func.count(Threat.id)).where(
+        and_(
+            Threat.published_at >= seven_days_ago,
+            Threat.severity == "low"
+        )
+    )
+    low_res = await db.execute(low_query)
+    low_count = low_res.scalar() or 0
     
     # Actively exploited count
     exploited_query = select(func.count(Threat.id)).where(
@@ -135,6 +165,9 @@ async def get_threat_stats(db: AsyncSession = Depends(get_db)):
     return ThreatStatsResponse(
         total_last_7_days=total_last_7_days,
         critical_count=critical_count,
+        high_count=high_count,
+        medium_count=medium_count,
+        low_count=low_count,
         actively_exploited_count=actively_exploited_count,
         avg_risk_score=avg_risk_score,
         trend=trend

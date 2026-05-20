@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     JWT_EXPIRY_HOURS: int = 24
 
     # External APIs
-    ANTHROPIC_API_KEY: str
+    GROQ_API_KEY: str
     NVD_API_KEY: str = ""  # Optional
     ABUSEIPDB_API_KEY: str
 

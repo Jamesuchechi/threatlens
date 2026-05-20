@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThreatLens — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg:    #080B0F;
+  --bg2:   #0E1318;
+  --bg3:   #141A21;
+  --bg4:   #1C242D;
+  --bg5:   #222C36;
+  --red:   #E8392A;
+  --redd:  #C02E22;
+  --amber: #E88C2A;
+  --green: #2AE87A;
+  --blue:  #3A8FE8;
+  --border:  rgba(255,255,255,0.07);
+  --borderb: rgba(255,255,255,0.13);
+  --text:  #EDF0F3;
+  --text2: #8A9BAD;
+  --text3: #4A5A6A;
+  --mono:  'JetBrains Mono', monospace;
+  --disp:  'Syne', sans-serif;
+  --body:  'DM Sans', sans-serif;
+  --sidebar: 220px;
+}
+
+html,body { height:100%; overflow:hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* grid overlay */
+body::before {
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.016) 1px, transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.016) 1px, transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 0 0;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  position: relative; z-index: 10;
+  flex-shrink: 0;
+}
+
+.topbar-left {
+  width: var(--sidebar);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.logo {
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--disp); font-weight: 700; font-size: 16px;
+  letter-spacing: -0.02em; color: var(--text); text-decoration: none;
+}
+
+.logo-icon {
+  width: 26px; height: 26px;
+  background: var(--red); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-icon svg { width:14px;height:14px;fill:#fff; }
+
+.topbar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+}
+
+.search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 12px;
+  width: 280px;
+  transition: border-color 0.2s;
+}
+.search-wrap:focus-within { border-color: var(--borderb); }
+
+.search-wrap input {
+  background: none; border: none; outline: none;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text); width: 100%;
+  letter-spacing: 0.02em;
+}
+.search-wrap input::placeholder { color: var(--text3); }
+
+.search-icon { color: var(--text3); flex-shrink: 0; }
+.search-icon svg { width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2; }
+
+.topbar-tag {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text3); background: var(--bg4);
+  border: 1px solid var(--border);
+  padding: 4px 10px; border-radius: 4px;
+}
+
+.topbar-right {
+  display: flex; align-items: center; gap: 16px;
+}
+
+.topbar-icon-btn {
+  width: 32px; height: 32px;
+  background: none; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text3); border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+.topbar-icon-btn:hover { background: var(--bg4); color: var(--text2); }
+.topbar-icon-btn svg { width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2; }
+
+.notif-dot {
+  position: absolute; top: 4px; right: 4px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--red);
+  border: 1.5px solid var(--bg2);
+}
+
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--red), #8B1CF0);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--disp); font-weight: 700; font-size: 11px;
+  color: #fff; cursor: pointer; flex-shrink: 0;
+}
+
+.divider-v { width:1px; height:20px; background: var(--border); }
+
+/* ── LAYOUT ── */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative; z-index: 1;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 0 20px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.sidebar-section-label {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text3); padding: 0 16px;
+  margin: 20px 0 6px;
+}
+
+.sidebar-section-label:first-child { margin-top: 0; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 16px;
+  font-size: 13px; color: var(--text3);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.nav-item svg { width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0; }
+
+.nav-item:hover { color: var(--text2); background: var(--bg3); }
+
+.nav-item.active {
+  color: var(--text);
+  background: var(--bg4);
+  border-left-color: var(--red);
+}
+
+.nav-badge {
+  margin-left: auto;
+  font-family: var(--mono); font-size: 9px;
+  background: rgba(232,57,42,0.15);
+  color: var(--red); border: 1px solid rgba(232,57,42,0.25);
+  padding: 2px 6px; border-radius: 3px;
+}
+
+.nav-badge.neutral {
+  background: var(--bg5); color: var(--text3);
+  border-color: var(--border);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-user {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.sidebar-user-info { flex: 1; min-width: 0; }
+.sidebar-user-name {
+  font-size: 12px; font-weight: 500; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sidebar-user-role {
+  font-family: var(--mono); font-size: 10px;
+  color: var(--text3); margin-top: 1px;
+}
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── PAGE HEADER ── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-family: var(--disp); font-weight: 800; font-size: 22px;
+  letter-spacing: -0.03em; color: var(--text); line-height: 1;
+  margin-bottom: 6px;
+}
+
+.page-sub {
+  font-size: 13px; color: var(--text3);
+  font-family: var(--mono);
+}
+
+.page-sub .pulse-dot {
+  display: inline-block;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green);
+  margin-right: 6px;
+  animation: pulse 2s infinite;
+  vertical-align: middle;
+}
+
+.page-actions { display: flex; align-items: center; gap: 8px; }
+
+.btn {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 8px 16px; border-radius: 4px;
+  cursor: pointer; border: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background 0.15s;
+}
+.btn-sm { padding: 6px 12px; font-size: 10px; }
+.btn-primary { color:#fff; background: var(--red); }
+.btn-primary:hover { background: var(--redd); }
+.btn-ghost {
+  color: var(--text2); background: var(--bg3);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--bg4); }
+.btn svg { width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2; }
+
+/* ── STAT CARDS ── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--borderb); }
+
+.stat-card::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+}
+.stat-card.red::before   { background: var(--red); }
+.stat-card.amber::before { background: var(--amber); }
+.stat-card.green::before { background: var(--green); }
+.stat-card.blue::before  { background: var(--blue); }
+
+.stat-label {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+.stat-label svg { width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2; }
+
+.stat-value {
+  font-family: var(--disp); font-weight: 800;
+  font-size: 32px; letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.stat-card.red   .stat-value { color: var(--red); }
+.stat-card.amber .stat-value { color: var(--amber); }
+.stat-card.green .stat-value { color: var(--green); }
+.stat-card.blue  .stat-value { color: var(--blue); }
+
+.stat-delta {
+  font-family: var(--mono); font-size: 10px;
+  margin-top: 8px; display: flex; align-items: center; gap: 4px;
+}
+.delta-up   { color: var(--red); }
+.delta-down { color: var(--green); }
+.delta-note { color: var(--text3); margin-left: 4px; }
+
+/* ── TWO-COLUMN ROW ── */
+.two-col { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* ── PANEL ── */
+.panel {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-title {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text2); display: flex; align-items: center; gap: 8px;
+}
+.panel-title svg { width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2; }
+
+.panel-actions { display: flex; align-items: center; gap: 8px; }
+
+.filter-pill {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text3); background: var(--bg4);
+  border: 1px solid var(--border);
+  padding: 4px 10px; border-radius: 3px;
+  cursor: pointer; transition: all 0.15s;
+}
+.filter-pill:hover, .filter-pill.active {
+  color: var(--text); border-color: var(--borderb);
+  background: var(--bg5);
+}
+.filter-pill.active-red {
+  color: var(--red); border-color: rgba(232,57,42,0.3);
+  background: rgba(232,57,42,0.08);
+}
+
+/* ── CHART AREA ── */
+.chart-area {
+  padding: 16px 18px;
+  height: 160px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.bar-group {
+  display: flex; flex-direction: column-reverse;
+  align-items: center; gap: 2px;
+  flex: 1; height: 100%;
+  justify-content: flex-start;
+}
+
+.bar-stack {
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  transition: opacity 0.2s;
+}
+.bar-stack:hover { opacity: 0.8; }
+
+.bar-label {
+  font-family: var(--mono); font-size: 9px;
+  color: var(--text3); white-space: nowrap;
+  margin-top: 6px;
+}
+
+/* sparkline mini chart */
+.sparkline-wrap {
+  padding: 10px 18px 14px;
+}
+
+/* ── THREAT TABLE ── */
+.table-wrap { overflow-x: auto; }
+
+.threat-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.threat-table th {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--text3); text-align: left;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap; cursor: pointer;
+  user-select: none;
+}
+.threat-table th:hover { color: var(--text2); }
+.threat-table th.sorted { color: var(--text); }
+.threat-table th .sort-arrow { margin-left: 4px; opacity: 0.5; }
+.threat-table th.sorted .sort-arrow { opacity: 1; }
+
+.threat-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.threat-table tr:last-child td { border-bottom: none; }
+
+.threat-table tr {
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.threat-table tr:hover td { background: var(--bg3); }
+
+/* ── SEV BADGE ── */
+.sev {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 3px;
+  display: inline-block; white-space: nowrap;
+}
+.sev-critical { background:rgba(232,57,42,0.15); color:#E8392A; border:1px solid rgba(232,57,42,0.28); }
+.sev-high     { background:rgba(232,140,42,0.15);color:#E88C2A; border:1px solid rgba(232,140,42,0.28); }
+.sev-medium   { background:rgba(232,199,42,0.10);color:#E8C72A; border:1px solid rgba(232,199,42,0.22); }
+.sev-low      { background:rgba(42,232,122,0.10);color:#2AE87A; border:1px solid rgba(42,232,122,0.2); }
+
+/* ── SCORE BAR ── */
+.score-cell { display:flex; align-items:center; gap:8px; }
+.score-bar-track {
+  width: 56px; height: 4px;
+  background: var(--bg4); border-radius: 2px; overflow: hidden;
+}
+.score-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+.score-num {
+  font-family: var(--mono); font-size: 11px;
+  min-width: 24px; text-align: right;
+}
+
+/* ── PATCH TAG ── */
+.patch-tag {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 3px;
+  display: inline-block;
+}
+.patch-yes { background:rgba(42,232,122,0.1); color:var(--green); border:1px solid rgba(42,232,122,0.2); }
+.patch-no  { background:rgba(232,57,42,0.1); color:var(--red); border:1px solid rgba(232,57,42,0.2); }
+
+/* ── EXPLOIT TAG ── */
+.exploit-tag {
+  font-family: var(--mono); font-size: 9px;
+  padding: 2px 7px; border-radius: 3px;
+  background:rgba(232,57,42,0.12);
+  color: var(--red); border:1px solid rgba(232,57,42,0.25);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.exploit-dot {
+  width:5px;height:5px;border-radius:50%;
+  background:var(--red); animation: pulse 1.5s infinite;
+}
+
+/* ── ALERT FEED ── */
+.alert-item {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-item:hover { background: var(--bg3); }
+
+.alert-item-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 8px;
+  margin-bottom: 6px;
+}
+
+.alert-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.35; }
+.alert-time  { font-family: var(--mono); font-size: 9px; color: var(--text3); white-space: nowrap; flex-shrink: 0; }
+.alert-reason { font-size: 11px; color: var(--text3); line-height: 1.4; }
+
+.alert-reason mark {
+  background: rgba(232,57,42,0.15);
+  color: var(--red); padding: 0 3px; border-radius: 2px;
+}
+
+/* ── RISK BREAKDOWN ── */
+.risk-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.risk-row:last-child { border-bottom: none; }
+.risk-row-label {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  width: 64px; flex-shrink: 0;
+}
+.risk-track {
+  flex: 1; height: 5px;
+  background: var(--bg4); border-radius: 3px; overflow: hidden;
+}
+.risk-fill { height: 100%; border-radius: 3px; }
+.risk-count {
+  font-family: var(--mono); font-size: 11px;
+  min-width: 28px; text-align: right;
+}
+
+/* ── INDUSTRY TAGS ── */
+.industry-tags {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 14px 18px;
+}
+.industry-tag {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 3px;
+  background: var(--bg4); border: 1px solid var(--border);
+  color: var(--text3); cursor: pointer;
+  transition: all 0.15s;
+}
+.industry-tag:hover { color: var(--text2); border-color: var(--borderb); }
+.industry-tag.active-industry {
+  background: rgba(58,143,232,0.12);
+  color: var(--blue); border-color: rgba(58,143,232,0.3);
+}
+
+/* ── CVE SOURCE DOTS ── */
+.source-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  display: inline-block; flex-shrink: 0;
+}
+.src-nvd  { background: var(--blue); }
+.src-cisa { background: var(--red); }
+.src-abuse { background: var(--amber); }
+
+/* ── DONUT CHART ── */
+.donut-wrap { padding: 16px 18px 12px; display:flex; align-items:center; gap:20px; }
+.donut-legend { display:flex; flex-direction:column; gap:8px; }
+.donut-legend-item {
+  display:flex; align-items:center; gap:8px;
+  font-family:var(--mono); font-size:10px; color:var(--text2);
+}
+.donut-legend-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+
+/* ── MINI SPARKLINE ── */
+.mini-spark { display: flex; align-items: flex-end; gap: 3px; height: 32px; }
+.spark-bar { width: 8px; border-radius: 1px 1px 0 0; flex-shrink: 0; }
+
+/* ── ANIMATIONS ── */
+@keyframes pulse {
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.4;transform:scale(.7)}
+}
+
+@keyframes fadein {
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.main > * { animation: fadein 0.4s ease both; }
+.main > *:nth-child(1){animation-delay:0s}
+.main > *:nth-child(2){animation-delay:0.05s}
+.main > *:nth-child(3){animation-delay:0.1s}
+.main > *:nth-child(4){animation-delay:0.15s}
+.main > *:nth-child(5){animation-delay:0.2s}
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg5); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ── -->
+<header class="topbar">
+  <div class="topbar-left">
+    <a href="/" class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 16 16"><path d="M8 1L1 5v6l7 4 7-4V5L8 1zm0 2.2L13 6v4l-5 2.8L3 10V6l5-2.8z"/></svg>
+      </div>
+      ThreatLens
+    </a>
+  </div>
+  <div class="topbar-center">
+    <div class="search-wrap">
+      <span class="search-icon">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </span>
+      <input type="text" placeholder="Search CVE, keyword, product…">
+    </div>
+    <span class="topbar-tag">⌘ K</span>
+  </div>
+  <div class="topbar-right">
+    <button class="topbar-icon-btn" title="Refresh">
+      <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    </button>
+    <button class="topbar-icon-btn" title="Notifications">
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="notif-dot"></span>
+    </button>
+    <div class="divider-v"></div>
+    <div class="avatar">AD</div>
+  </div>
+</header>
+
+<!-- ── LAYOUT ── -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section-label">Intelligence</div>
+
+    <div class="nav-item active">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+      Threats
+      <span class="nav-badge">12</span>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Alerts
+      <span class="nav-badge">5</span>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Monitor
+      <span class="nav-badge neutral">Beta</span>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      CVE Explorer
+    </div>
+
+    <div class="sidebar-section-label">My profile</div>
+
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Patch Tracker
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      My Stack
+    </div>
+
+    <div class="sidebar-section-label">Config</div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Integrations
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar" style="width:30px;height:30px;font-size:10px">AD</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">Alex Doe</div>
+          <div class="sidebar-user-role">Healthcare · Admin</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">
+          <span class="pulse-dot"></span>
+          Last synced 4 minutes ago · 247 threats indexed today
+        </div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-ghost btn-sm">
+          <svg viewBox="0 0 24 24"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
+          Export
+        </button>
+        <button class="btn btn-ghost btn-sm">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Last 7 days ▾
+        </button>
+        <button class="btn btn-primary btn-sm">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Sync feeds
+        </button>
+      </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stat-grid">
+      <div class="stat-card red">
+        <div class="stat-label">
+          <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+          Critical threats
+        </div>
+        <div class="stat-value">12</div>
+        <div class="stat-delta delta-up">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+          +4
+          <span class="delta-note">vs last week</span>
+        </div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          High severity
+        </div>
+        <div class="stat-value">38</div>
+        <div class="stat-delta delta-up">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+          +11
+          <span class="delta-note">vs last week</span>
+        </div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">
+          <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Exploited (CISA)
+        </div>
+        <div class="stat-value">8</div>
+        <div class="stat-delta delta-down">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          −2
+          <span class="delta-note">vs last week</span>
+        </div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Total indexed
+        </div>
+        <div class="stat-value">247</div>
+        <div class="stat-delta delta-up">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+          +63
+          <span class="delta-note">vs last week</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart row + alert feed -->
+    <div class="two-col">
+
+      <!-- Volume chart -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Threat volume — last 7 days
+          </div>
+          <div class="panel-actions">
+            <span class="filter-pill" style="color:var(--red);border-color:rgba(232,57,42,0.28);background:rgba(232,57,42,0.08)">Critical</span>
+            <span class="filter-pill" style="color:var(--amber);border-color:rgba(232,140,42,0.28);background:rgba(232,140,42,0.08)">High</span>
+            <span class="filter-pill">Medium</span>
+          </div>
+        </div>
+        <div class="chart-area" id="barChart">
+          <!-- JS fills this -->
+        </div>
+        <!-- Mini legend -->
+        <div style="display:flex;align-items:center;gap:16px;padding:8px 18px 14px;border-top:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--text3)">
+            <div style="width:8px;height:8px;border-radius:1px;background:var(--red)"></div> Critical
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--text3)">
+            <div style="width:8px;height:8px;border-radius:1px;background:var(--amber)"></div> High
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;color:var(--text3)">
+            <div style="width:8px;height:8px;border-radius:1px;background:var(--blue)"></div> Medium
+          </div>
+          <div style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text3)">Total this week: <span style="color:var(--text)">247</span></div>
+        </div>
+      </div>
+
+      <!-- Alert feed -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            My alerts
+          </div>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--red);background:rgba(232,57,42,0.1);border:1px solid rgba(232,57,42,0.22);padding:2px 7px;border-radius:3px">5 new</span>
+        </div>
+
+        <div class="alert-item">
+          <div class="alert-item-top">
+            <div class="alert-title">Apache HTTP Server RCE via mod_rewrite</div>
+            <div class="alert-time">2h ago</div>
+          </div>
+          <div class="alert-reason">Matches stack: <mark>apache</mark></div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-item-top">
+            <div class="alert-title">Ivanti Connect Secure Auth Bypass</div>
+            <div class="alert-time">5h ago</div>
+          </div>
+          <div class="alert-reason">Industry match: <mark>healthcare</mark></div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-item-top">
+            <div class="alert-title">OpenSSL Buffer Overflow TLS</div>
+            <div class="alert-time">12h ago</div>
+          </div>
+          <div class="alert-reason">Matches stack: <mark>openssl</mark></div>
+        </div>
+        <div class="alert-item">
+          <div class="alert-item-top">
+            <div class="alert-title">WordPress Plugin XSS — Contact Form 7</div>
+            <div class="alert-time">1d ago</div>
+          </div>
+          <div class="alert-reason">Matches stack: <mark>wordpress</mark></div>
+        </div>
+        <div class="alert-item" style="border-bottom:none">
+          <div class="alert-item-top">
+            <div class="alert-title">MySQL Privilege Escalation</div>
+            <div class="alert-time">1d ago</div>
+          </div>
+          <div class="alert-reason">Matches stack: <mark>mysql</mark></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Severity breakdown + industry filter + source distribution -->
+    <div class="three-col">
+
+      <!-- Severity breakdown -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            Severity breakdown
+          </div>
+        </div>
+        <div class="risk-row">
+          <div class="risk-row-label" style="color:var(--red)">Critical</div>
+          <div class="risk-track"><div class="risk-fill" style="width:5%;background:var(--red)"></div></div>
+          <div class="risk-count" style="color:var(--red)">12</div>
+        </div>
+        <div class="risk-row">
+          <div class="risk-row-label" style="color:var(--amber)">High</div>
+          <div class="risk-track"><div class="risk-fill" style="width:15%;background:var(--amber)"></div></div>
+          <div class="risk-count" style="color:var(--amber)">38</div>
+        </div>
+        <div class="risk-row">
+          <div class="risk-row-label" style="color:#E8C72A">Medium</div>
+          <div class="risk-track"><div class="risk-fill" style="width:55%;background:#E8C72A"></div></div>
+          <div class="risk-count" style="color:#E8C72A">133</div>
+        </div>
+        <div class="risk-row">
+          <div class="risk-row-label" style="color:var(--green)">Low</div>
+          <div class="risk-track"><div class="risk-fill" style="width:26%;background:var(--green)"></div></div>
+          <div class="risk-count" style="color:var(--green)">64</div>
+        </div>
+        <!-- donut -->
+        <div class="donut-wrap" style="padding-top:14px;border-top:1px solid var(--border)">
+          <svg width="72" height="72" viewBox="0 0 72 72" id="donut"></svg>
+          <div class="donut-legend">
+            <div class="donut-legend-item"><div class="donut-legend-dot" style="background:var(--red)"></div>Critical 5%</div>
+            <div class="donut-legend-item"><div class="donut-legend-dot" style="background:var(--amber)"></div>High 15%</div>
+            <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#E8C72A"></div>Medium 54%</div>
+            <div class="donut-legend-item"><div class="donut-legend-dot" style="background:var(--green)"></div>Low 26%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Industry filter -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Industry relevance
+          </div>
+        </div>
+        <div class="industry-tags">
+          <span class="industry-tag active-industry">Healthcare</span>
+          <span class="industry-tag">Finance</span>
+          <span class="industry-tag">Retail</span>
+          <span class="industry-tag">Education</span>
+          <span class="industry-tag">Manufacturing</span>
+          <span class="industry-tag">Technology</span>
+          <span class="industry-tag">Legal</span>
+          <span class="industry-tag">Hospitality</span>
+          <span class="industry-tag">Government</span>
+          <span class="industry-tag">Nonprofit</span>
+        </div>
+        <!-- spark per industry -->
+        <div style="padding:10px 18px 14px;border-top:1px solid var(--border)">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px">Healthcare threats — 7 day trend</div>
+          <div class="mini-spark" id="sparkIndustry"></div>
+        </div>
+      </div>
+
+      <!-- Data sources -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            Data sources
+          </div>
+        </div>
+        <div style="padding:14px 18px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="source-dot src-nvd"></div>
+              <div style="font-size:12px;color:var(--text)">NVD / NIST</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="mini-spark" id="sparkNVD" style="height:20px"></div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--blue)">184</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="source-dot src-cisa"></div>
+              <div style="font-size:12px;color:var(--text)">CISA KEV</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="mini-spark" id="sparkCISA" style="height:20px"></div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--red)">41</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="source-dot src-abuse"></div>
+              <div style="font-size:12px;color:var(--text)">AbuseIPDB</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="mini-spark" id="sparkABUSE" style="height:20px"></div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--amber)">22</div>
+            </div>
+          </div>
+        </div>
+        <!-- last sync times -->
+        <div style="padding:12px 18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">Last ingestion</div>
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px">
+            <span style="color:var(--text3)">NVD</span><span style="color:var(--green)">4 min ago</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px">
+            <span style="color:var(--text3)">CISA KEV</span><span style="color:var(--green)">4 min ago</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px">
+            <span style="color:var(--text3)">AbuseIPDB</span><span style="color:var(--amber)">6h ago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Threat table -->
+    <div class="panel" style="margin-bottom:8px">
+      <div class="panel-header">
+        <div class="panel-title">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Live threat feed
+        </div>
+        <div class="panel-actions">
+          <span class="filter-pill active-red">All</span>
+          <span class="filter-pill">Critical</span>
+          <span class="filter-pill">Exploited</span>
+          <span class="filter-pill">No patch</span>
+          <input type="text" placeholder="Filter…" style="
+            background:var(--bg4);border:1px solid var(--border);
+            border-radius:4px;padding:5px 10px;
+            font-family:var(--mono);font-size:11px;
+            color:var(--text);outline:none;width:140px;
+          ">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="threat-table">
+          <thead>
+            <tr>
+              <th>Severity</th>
+              <th class="sorted">Risk Score <span class="sort-arrow">↓</span></th>
+              <th>Vulnerability <span class="sort-arrow" style="opacity:0.3">↕</span></th>
+              <th>CVE ID</th>
+              <th>Source</th>
+              <th>Published</th>
+              <th>Patch</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="sev sev-critical">Critical</span></td>
+              <td>
+                <div class="score-cell">
+                  <div class="score-bar-track"><div class="score-bar-fill" style="width:98%;background:var(--red)"></div></div>
+                  <span class="score-num" style="color:var(--red)">9.8</span>
+                </div>
+              </td>
+              <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">Apache HTTP Server RCE via mod_rewrite</td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">CVE-2026-21310</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="source-dot src-nvd"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text3)">NVD</span></div></td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">2h ago</td>
+              <td><span class="patch-tag patch-yes">Available</span></td>
+              <td><span class="exploit-tag"><span class="exploit-dot"></span>Exploited</span></td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-critical">Critical</span></td>
+              <td>
+                <div class="score-cell">
+                  <div class="score-bar-track"><div class="score-bar-fill" style="width:91%;background:var(--red)"></div></div>
+                  <span class="score-num" style="color:var(--red)">9.1</span>
+                </div>
+              </td>
+              <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">Ivanti Connect Secure Authentication Bypass</td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">CVE-2026-22991</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="source-dot src-cisa"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text3)">CISA</span></div></td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">5h ago</td>
+              <td><span class="patch-tag patch-no">None</span></td>
+              <td><span class="exploit-tag"><span class="exploit-dot"></span>Exploited</span></td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-high">High</span></td>
+              <td>
+                <div class="score-cell">
+                  <div class="score-bar-track"><div class="score-bar-fill" style="width:75%;background:var(--amber)"></div></div>
+                  <span class="score-num" style="color:var(--amber)">7.5</span>
+                </div>
+              </td>
+              <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">OpenSSL Buffer Overflow via Malformed TLS Certificate</td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">CVE-2026-18843</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="source-dot src-nvd"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text3)">NVD</span></div></td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">12h ago</td>
+              <td><span class="patch-tag patch-yes">Available</span></td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">—</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-high">High</span></td>
+              <td>
+                <div class="score-cell">
+                  <div class="score-bar-track"><div class="score-bar-fill" style="width:72%;background:var(--amber)"></div></div>
+                  <span class="score-num" style="color:var(--amber)">7.2</span>
+                </div>
+              </td>
+              <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">MySQL Privilege Escalation via Stored Procedure</td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">CVE-2026-17220</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="source-dot src-nvd"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text3)">NVD</span></div></td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">1d ago</td>
+              <td><span class="patch-tag patch-yes">Available</span></td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">—</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-medium">Medium</span></td>
+              <td>
+                <div class="score-cell">
+                  <div class="score-bar-track"><div class="score-bar-fill" style="width:61%;background:#E8C72A"></div></div>
+                  <span class="score-num" style="color:#E8C72A">6.1</span>
+                </div>
+              </td>
+              <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">WordPress Contact Form 7 Stored XSS</td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">CVE-2026-15560</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="source-dot src-nvd"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text3)">NVD</span></div></td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">1d ago</td>
+              <td><span class="patch-tag patch-yes">Available</span></td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">—</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-medium">Medium</span></td>
+              <td>
+                <div class="score-cell">
+                  <div class="score-bar-track"><div class="score-bar-fill" style="width:58%;background:#E8C72A"></div></div>
+                  <span class="score-num" style="color:#E8C72A">5.8</span>
+                </div>
+              </td>
+              <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">Node.js Path Traversal in File Upload Handler</td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">CVE-2026-14401</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="source-dot src-nvd"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text3)">NVD</span></div></td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">2d ago</td>
+              <td><span class="patch-tag patch-yes">Available</span></td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">—</td>
+            </tr>
+            <tr>
+              <td><span class="sev sev-low">Low</span></td>
+              <td>
+                <div class="score-cell">
+                  <div class="score-bar-track"><div class="score-bar-fill" style="width:32%;background:var(--green)"></div></div>
+                  <span class="score-num" style="color:var(--green)">3.2</span>
+                </div>
+              </td>
+              <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">Nginx Information Disclosure via Server Header</td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">CVE-2026-11109</td>
+              <td><div style="display:flex;align-items:center;gap:6px"><div class="source-dot src-abuse"></div><span style="font-family:var(--mono);font-size:10px;color:var(--text3)">Abuse</span></div></td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">3d ago</td>
+              <td><span class="patch-tag patch-yes">Available</span></td>
+              <td style="font-family:var(--mono);font-size:10px;color:var(--text3)">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- table footer -->
+      <div style="
+        padding: 12px 18px;
+        border-top: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: space-between;
+      ">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">
+          Showing 7 of <span style="color:var(--text)">247</span> threats
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="btn btn-ghost btn-sm" style="padding:5px 10px">← Prev</button>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);padding:0 8px">Page 1 of 36</span>
+          <button class="btn btn-ghost btn-sm" style="padding:5px 10px">Next →</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── BAR CHART ──
+const barData = [
+  { day:'Mon', crit:1, high:4, med:14 },
+  { day:'Tue', crit:2, high:6, med:18 },
+  { day:'Wed', crit:0, high:3, med:11 },
+  { day:'Thu', crit:3, high:7, med:22 },
+  { day:'Fri', crit:4, high:8, med:28 },
+  { day:'Sat', crit:1, high:5, med:16 },
+  { day:'Sun', crit:1, high:5, med:24 },
+];
+
+const chart = document.getElementById('barChart');
+const maxVal = Math.max(...barData.map(d => d.crit+d.high+d.med));
+
+barData.forEach(d => {
+  const total = d.crit + d.high + d.med;
+  const pct = h => ((h/maxVal)*130) + 'px';
+  const col = document.createElement('div');
+  col.style.cssText = 'display:flex;flex-direction:column;align-items:center;flex:1;height:100%;justify-content:flex-end;gap:0';
+
+  const critBar = document.createElement('div');
+  critBar.style.cssText = `width:100%;height:${pct(d.crit)};background:var(--red);border-radius:2px 2px 0 0;`;
+
+  const highBar = document.createElement('div');
+  highBar.style.cssText = `width:100%;height:${pct(d.high)};background:var(--amber);`;
+
+  const medBar = document.createElement('div');
+  medBar.style.cssText = `width:100%;height:${pct(d.med)};background:var(--blue);opacity:0.7;`;
+
+  const lbl = document.createElement('div');
+  lbl.className = 'bar-label';
+  lbl.textContent = d.day;
+
+  col.appendChild(critBar);
+  col.appendChild(highBar);
+  col.appendChild(medBar);
+  col.appendChild(lbl);
+  chart.appendChild(col);
+});
+
+// ── DONUT ──
+const donut = document.getElementById('donut');
+const segments = [
+  { pct: 5,  color: 'var(--red)' },
+  { pct: 15, color: 'var(--amber)' },
+  { pct: 54, color: '#E8C72A' },
+  { pct: 26, color: 'var(--green)' },
+];
+const cx=36, cy=36, r=28, strokeW=10;
+const circ = 2*Math.PI*r;
+let offset = 0;
+segments.forEach(s => {
+  const dash = (s.pct/100)*circ;
+  const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circle.setAttribute('cx',cx); circle.setAttribute('cy',cy); circle.setAttribute('r',r);
+  circle.setAttribute('fill','none');
+  circle.setAttribute('stroke', s.color.replace('var(','').replace(')','').trim());
+  // resolve CSS vars manually
+  const colorMap = {'--red':'#E8392A','--amber':'#E88C2A','--green':'#2AE87A'};
+  const resolvedColor = colorMap[s.color.replace('var(','').replace(')','').trim()] || s.color;
+  circle.setAttribute('stroke', resolvedColor);
+  circle.setAttribute('stroke-width', strokeW);
+  circle.setAttribute('stroke-dasharray', `${dash} ${circ-dash}`);
+  circle.setAttribute('stroke-dashoffset', -offset);
+  circle.setAttribute('transform',`rotate(-90 ${cx} ${cy})`);
+  donut.appendChild(circle);
+  offset += dash;
+});
+
+// ── SPARKLINES ──
+function makeSpark(id, data, color, h=32) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.height = h+'px';
+  const mx = Math.max(...data);
+  data.forEach(v => {
+    const b = document.createElement('div');
+    b.className = 'spark-bar';
+    b.style.cssText = `height:${Math.max((v/mx)*h,3)}px;background:${color};opacity:0.7;width:8px;border-radius:1px 1px 0 0;flex-shrink:0;align-self:flex-end`;
+    el.appendChild(b);
+  });
+}
+
+makeSpark('sparkIndustry', [8,12,9,15,14,11,18], 'var(--blue)', 32);
+makeSpark('sparkNVD',      [24,31,22,38,35,28,42], 'var(--blue)', 20);
+makeSpark('sparkCISA',     [4,6,3,8,7,5,8],  'var(--red)', 20);
+makeSpark('sparkABUSE',    [2,4,3,5,4,2,4],  'var(--amber)', 20);
+</script>
+</body>
+</html>

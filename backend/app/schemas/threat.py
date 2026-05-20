@@ -57,6 +57,9 @@ class ThreatStatsTrend(BaseModel):
 class ThreatStatsResponse(BaseModel):
     total_last_7_days: int
     critical_count: int
+    high_count: int
+    medium_count: int
+    low_count: int
     actively_exploited_count: int
     avg_risk_score: float
     trend: List[ThreatStatsTrend]

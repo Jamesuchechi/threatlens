@@ -1,33 +1,30 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { 
   ArrowLeft, 
-  Shield, 
-  LogOut,
-  Save,
-  CheckCircle,
-  AlertCircle,
-  Plus,
-  X,
-  Lock,
-  Mail,
-  User as UserIcon,
-  Globe
+  Save, 
+  CheckCircle, 
+  AlertCircle, 
+  Plus, 
+  X, 
+  Lock, 
+  Mail, 
+  Globe 
 } from 'lucide-react'
 import { useThreatStore } from '../store/threatStore'
 import api from '../services/api'
+import Layout from '../components/common/Layout'
 import './Settings.css'
 
 export default function Settings() {
   const user = useThreatStore((state) => state.user)
   const token = useThreatStore((state) => state.token)
-  const logout = useThreatStore((state) => state.logout)
   const setAuth = useThreatStore((state) => state.setAuth)
   const navigate = useNavigate()
 
   // State fields
   const [name, setName] = useState(() => user?.name || '')
-  const [industry, setIndustry] = useState(() => user?.industry || 'Technology')
+  const [industry, setIndustry] = useState(() => user?.industry || 'technology')
   const [techStack, setTechStack] = useState(() => user?.tech_stack || [])
   const [newTech, setNewTech] = useState('')
   const [alertEmail, setAlertEmail] = useState(() => user?.alert_email_enabled !== false)
@@ -44,7 +41,6 @@ export default function Settings() {
       navigate('/login')
     }
   }, [token, user, navigate])
-
 
   const handleAddTech = (e) => {
     e.preventDefault()
@@ -68,7 +64,7 @@ export default function Settings() {
     try {
       const res = await api.put('/auth/me', {
         name,
-        industry,
+        industry: industry.toLowerCase(),
         tech_stack: techStack,
         alert_email_enabled: alertEmail,
         alert_webhook_url: webhookUrl || null
@@ -89,54 +85,17 @@ export default function Settings() {
     }
   }
 
-  if (!user) {
-    return (
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg)' }}>
-        <div className="spinner" />
-      </div>
-    )
-  }
+  if (!user) return null
 
   return (
-    <div className="settings-wrapper">
-      {/* Top Navbar */}
-      <nav className="dashboard-nav">
-        <Link to="/dashboard" className="dashboard-logo">
-          <div className="logo-icon">
-            <Shield size={16} />
-          </div>
-          ThreatLens
-        </Link>
-
-        <div className="nav-links">
-          <Link to="/dashboard" className="nav-link-item">Dashboard</Link>
-          <Link to="/settings" className="nav-link-item active">Settings</Link>
-          
-          <div className="nav-user">
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>{user.name}</div>
-              <div style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: 'var(--text-3)' }}>{user.email}</div>
-            </div>
-            <button 
-              onClick={() => { logout(); navigate('/') }} 
-              className="btn-outline" 
-              style={{ padding: '6px 12px', fontSize: '11px', height: '32px' }}
-            >
-              <LogOut size={12} />
-              Sign out
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Settings Container */}
-      <div className="settings-container">
+    <Layout>
+      <div className="settings-container" style={{ margin: '0', maxWidth: '100%' }}>
         <button onClick={() => navigate('/dashboard')} className="back-link">
           <ArrowLeft size={14} />
           Back to Dashboard
         </button>
 
-        <h1 style={{ fontFamily: 'var(--display)', fontSize: '32px', fontWeight: 800, marginBottom: '32px' }}>
+        <h1 style={{ fontFamily: 'var(--display)', fontSize: '24px', fontWeight: 800, marginBottom: '24px', color: 'var(--text)' }}>
           Account Settings
         </h1>
 
@@ -154,162 +113,191 @@ export default function Settings() {
           </div>
         )}
 
-        <form onSubmit={handleSave}>
-          {/* Card 1: User Profile */}
-          <div className="settings-card">
-            <div className="settings-card-header">
-              <h2 className="settings-card-title">Profile Profile</h2>
-              <p className="settings-card-desc">Personal details and registration authentication.</p>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Full Name</label>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <UserIcon size={14} style={{ position: 'absolute', left: '12px', color: 'var(--text-3)' }} />
-                <input 
-                  type="text" 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
-                  required
-                  className="form-input"
-                  style={{ paddingLeft: '36px' }}
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center', opacity: 0.6 }}>
-                <Mail size={14} style={{ position: 'absolute', left: '12px', color: 'var(--text-3)' }} />
-                <input 
-                  type="email" 
-                  value={user.email} 
-                  disabled
-                  className="form-input"
-                  style={{ paddingLeft: '36px', cursor: 'not-allowed' }}
-                />
-                <Lock size={12} style={{ position: 'absolute', right: '12px', color: 'var(--text-3)' }} />
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Environment Scope */}
-          <div className="settings-card">
-            <div className="settings-card-header">
-              <h2 className="settings-card-title">Infrastructure Ecosystem</h2>
-              <p className="settings-card-desc">Configure your monitored tech stack tags and business industry sector.</p>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Target Industry Sector</label>
-              <select 
-                value={industry} 
-                onChange={(e) => setIndustry(e.target.value)}
-                className="form-select"
-              >
-                <option value="Technology">Technology</option>
-                <option value="Finance">Finance</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Energy">Energy</option>
-                <option value="Government">Government</option>
-                <option value="Manufacturing">Manufacturing</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Monitored Technology Stack</label>
-              <div className="tech-input-container">
-                <input 
-                  type="text" 
-                  placeholder="e.g. React, Docker, nginx, PostgreSQL..."
-                  value={newTech}
-                  onChange={(e) => setNewTech(e.target.value)}
-                  className="form-input"
-                />
-                <button 
-                  type="button" 
-                  onClick={handleAddTech}
-                  className="btn-outline" 
-                  style={{ padding: '0 16px', height: '42px' }}
-                >
-                  <Plus size={16} />
-                </button>
+        <form onSubmit={handleSave} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }}>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Card 1: User Profile */}
+            <div className="settings-card" style={{ margin: 0 }}>
+              <div className="settings-card-header">
+                <h2 className="settings-card-title">User Profile</h2>
+                <p className="settings-card-desc">Personal details and authentication.</p>
               </div>
 
-              <div className="tech-tags-container">
-                {techStack.length > 0 ? (
-                  techStack.map((tech) => (
-                    <span key={tech} className="tech-tag-badge">
-                      {tech}
-                      <button 
-                        type="button" 
-                        onClick={() => handleRemoveTech(tech)}
-                        className="remove-tag-btn"
-                      >
-                        <X size={10} />
-                      </button>
-                    </span>
-                  ))
-                ) : (
-                  <span style={{ fontSize: '13px', color: 'var(--text-3)', fontStyle: 'italic', padding: '4px 0' }}>
-                    No tech tags added yet. Type tags and click '+' to include monitored tools.
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Card 3: Alert Channels */}
-          <div className="settings-card">
-            <div className="settings-card-header">
-              <h2 className="settings-card-title">Intelligence Dispatcher</h2>
-              <p className="settings-card-desc">Set up warning channels to report high-severity threats.</p>
-            </div>
-
-            <div className="form-group" style={{ marginBottom: '24px' }}>
-              <label className="checkbox-label-container">
-                <input 
-                  type="checkbox" 
-                  checked={alertEmail} 
-                  onChange={(e) => setAlertEmail(e.target.checked)}
-                  className="checkbox-input"
-                />
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 500 }}>Email Notification Dispatcher</span>
-                  <span style={{ fontSize: '12px', color: 'var(--text-3)' }}>Receive instant email reports of critical vulnerabilities.</span>
+              <div className="form-group">
+                <label className="form-label">Full Name</label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <UserIconIconWrapper />
+                  <input 
+                    type="text" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)} 
+                    required
+                    className="form-input"
+                    style={{ paddingLeft: '36px' }}
+                  />
                 </div>
-              </label>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Email Address</label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', opacity: 0.6 }}>
+                  <Mail size={14} style={{ position: 'absolute', left: '12px', color: 'var(--text-3)' }} />
+                  <input 
+                    type="email" 
+                    value={user.email} 
+                    disabled
+                    className="form-input"
+                    style={{ paddingLeft: '36px', cursor: 'not-allowed' }}
+                  />
+                  <Lock size={12} style={{ position: 'absolute', right: '12px', color: 'var(--text-3)' }} />
+                </div>
+              </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Alert Webhook URL (Optional)</label>
-              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <Globe size={14} style={{ position: 'absolute', left: '12px', color: 'var(--text-3)' }} />
-                <input 
-                  type="url" 
-                  placeholder="https://hooks.slack.com/services/..."
-                  value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
-                  className="form-input"
-                  style={{ paddingLeft: '36px' }}
-                />
+            {/* Card 3: Alert Channels */}
+            <div className="settings-card" style={{ margin: 0 }}>
+              <div className="settings-card-header">
+                <h2 className="settings-card-title">Alert Notifications</h2>
+                <p className="settings-card-desc">Set up warning channels to report high-severity threats.</p>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: '24px' }}>
+                <label className="checkbox-label-container">
+                  <input 
+                    type="checkbox" 
+                    checked={alertEmail} 
+                    onChange={(e) => setAlertEmail(e.target.checked)}
+                    className="checkbox-input"
+                  />
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 500 }}>Email Notification Dispatcher</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-3)' }}>Receive instant email reports of critical vulnerabilities.</span>
+                  </div>
+                </label>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Alert Webhook URL (Optional)</label>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <Globe size={14} style={{ position: 'absolute', left: '12px', color: 'var(--text-3)' }} />
+                  <input 
+                    type="url" 
+                    placeholder="https://hooks.slack.com/services/..."
+                    value={webhookUrl}
+                    onChange={(e) => setWebhookUrl(e.target.value)}
+                    className="form-input"
+                    style={{ paddingLeft: '36px' }}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Action Row */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px' }}>
-            <button 
-              type="submit" 
-              disabled={isSaving}
-              className="settings-btn-save"
-            >
-              <Save size={14} />
-              {isSaving ? 'Saving Changes...' : 'Save Settings'}
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* Card 2: Environment Scope */}
+            <div className="settings-card" style={{ margin: 0, height: '100%' }}>
+              <div className="settings-card-header">
+                <h2 className="settings-card-title">Infrastructure Ecosystem</h2>
+                <p className="settings-card-desc">Configure your monitored tech stack tags and business industry sector.</p>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Target Industry Sector</label>
+                <select 
+                  value={industry} 
+                  onChange={(e) => setIndustry(e.target.value)}
+                  className="form-select"
+                  style={{ textTransform: 'capitalize' }}
+                >
+                  <option value="technology">Technology</option>
+                  <option value="finance">Finance</option>
+                  <option value="healthcare">Healthcare</option>
+                  <option value="education">Education</option>
+                  <option value="government">Government</option>
+                  <option value="manufacturing">Manufacturing</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Monitored Technology Stack</label>
+                <div className="tech-input-container">
+                  <input 
+                    type="text" 
+                    placeholder="e.g. React, Docker, nginx, PostgreSQL..."
+                    value={newTech}
+                    onChange={(e) => setNewTech(e.target.value)}
+                    className="form-input"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={handleAddTech}
+                    className="btn-outline" 
+                    style={{ padding: '0 16px', height: '42px', background: 'var(--bg4)', border: '1px solid var(--border)', cursor: 'pointer', borderRadius: '6px' }}
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+
+                <div className="tech-tags-container">
+                  {techStack.length > 0 ? (
+                    techStack.map((tech) => (
+                      <span key={tech} className="tech-tag-badge">
+                        {tech}
+                        <button 
+                          type="button" 
+                          onClick={() => handleRemoveTech(tech)}
+                          className="remove-tag-btn"
+                        >
+                          <X size={10} />
+                        </button>
+                      </span>
+                    ))
+                  ) : (
+                    <span style={{ fontSize: '12px', color: 'var(--text-3)', fontStyle: 'italic', padding: '4px 0' }}>
+                      No tech tags added yet. Type tags and click '+' to include monitored tools.
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Row */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+              <button 
+                type="submit" 
+                disabled={isSaving}
+                className="settings-btn-save"
+                style={{ width: '100%', justifyContent: 'center' }}
+              >
+                <Save size={14} />
+                {isSaving ? 'Saving Changes...' : 'Save Settings'}
+              </button>
+            </div>
           </div>
+
         </form>
       </div>
-    </div>
+    </Layout>
+  )
+}
+
+function UserIconIconWrapper() {
+  // Simple wrapper because of icon naming clash
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width="14" 
+      height="14" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      style={{ position: 'absolute', left: '12px', color: 'var(--text-3)' }}
+    >
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
   )
 }

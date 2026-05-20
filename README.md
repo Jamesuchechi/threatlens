@@ -211,7 +211,7 @@ Edit `.env` and fill in:
 
 ```env
 # AI
-ANTHROPIC_API_KEY=your_GROQ_api_key
+GROQ_API_KEY=your_GROQ_api_key
 
 # Database
 DATABASE_URL=postgresql://postgres:password@localhost:5432/threatlens
@@ -274,7 +274,7 @@ npm run dev
 
 | Key                 | Source                                                                        | Cost        | Notes                       |
 | ------------------- | ----------------------------------------------------------------------------- | ----------- | --------------------------- |
-| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com)                        | Pay-per-use | ~$0.003 per threat summary  |
+| `GROQ_API_KEY`      | [console.GROQ.com](https://console.GROQ.com)                                  | Pay-per-use | ~$0.003 per threat summary  |
 | `NVD_API_KEY`       | [nvd.nist.gov/developers](https://nvd.nist.gov/developers/request-an-api-key) | Free        | Higher rate limits with key |
 | `ABUSEIPDB_API_KEY` | [abuseipdb.com](https://www.abuseipdb.com/api)                                | Free tier   | 1,000 checks/day free       |
 

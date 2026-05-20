@@ -1,60 +1,127 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { 
-  Search, 
   Shield, 
-  AlertTriangle, 
-  CheckCircle, 
-  Terminal, 
-  LogOut,
-  Calendar,
-  ChevronRight,
-  Filter,
-  RefreshCw,
-  Info
+  RefreshCw, 
+  AlertOctagon, 
+  ShieldAlert, 
+  Activity, 
+  CheckSquare, 
+  Layers, 
+  FileText,
+  Database,
+  SlidersHorizontal
 } from 'lucide-react'
 import { 
-  AreaChart, 
-  Area, 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar, 
   XAxis, 
   YAxis, 
   Tooltip, 
-  ResponsiveContainer 
+  Cell 
 } from 'recharts'
 import { useThreatStore } from '../store/threatStore'
 import api from '../services/api'
+import Layout from '../components/common/Layout'
 import './Dashboard.css'
+
+// Donut Chart Component using inline SVG and percentages
+function DonutChart({ critical, high, medium, low }) {
+  const total = critical + high + medium + low || 1
+  const pCrit = (critical / total) * 100
+  const pHigh = (high / total) * 100
+  const pMed = (medium / total) * 100
+  const pLow = (low / total) * 100
+
+  const r = 24
+  const c = 2 * Math.PI * r // ~150.8
+
+  const strokeCrit = (pCrit / 100) * c
+  const strokeHigh = (pHigh / 100) * c
+  const strokeMed = (pMed / 100) * c
+  const strokeLow = (pLow / 100) * c
+
+  let offset = 0
+  const critOffset = c - offset
+  offset += strokeCrit
+  const highOffset = c - offset
+  offset += strokeHigh
+  const medOffset = c - offset
+  offset += strokeMed
+  const lowOffset = c - offset
+
+  return (
+    <div className="donut-wrap" style={{ paddingTop: '14px', borderTop: '1px solid var(--border)' }}>
+      <svg width="72" height="72" viewBox="0 0 72 72" style={{ transform: 'rotate(-90deg)', flexShrink: 0 }}>
+        {/* Background circle */}
+        <circle cx="36" cy="36" r={r} fill="none" stroke="var(--bg4)" strokeWidth="6" />
+        
+        {/* Segments */}
+        {pLow > 0 && <circle cx="36" cy="36" r={r} fill="none" stroke="var(--green)" strokeWidth="6" strokeDasharray={`${strokeLow} ${c}`} strokeDashoffset={lowOffset} />}
+        {pMed > 0 && <circle cx="36" cy="36" r={r} fill="none" stroke="#E8C72A" strokeWidth="6" strokeDasharray={`${strokeMed} ${c}`} strokeDashoffset={medOffset} />}
+        {pHigh > 0 && <circle cx="36" cy="36" r={r} fill="none" stroke="var(--amber)" strokeWidth="6" strokeDasharray={`${strokeHigh} ${c}`} strokeDashoffset={highOffset} />}
+        {pCrit > 0 && <circle cx="36" cy="36" r={r} fill="none" stroke="var(--red)" strokeWidth="6" strokeDasharray={`${strokeCrit} ${c}`} strokeDashoffset={critOffset} />}
+      </svg>
+      <div className="donut-legend" style={{ flex: 1 }}>
+        <div className="donut-legend-item">
+          <div className="donut-legend-dot" style={{ background: 'var(--red)' }} />
+          Critical ({critical})
+        </div>
+        <div className="donut-legend-item">
+          <div className="donut-legend-dot" style={{ background: 'var(--amber)' }} />
+          High ({high})
+        </div>
+        <div className="donut-legend-item">
+          <div className="donut-legend-dot" style={{ background: '#E8C72A' }} />
+          Medium ({medium})
+        </div>
+        <div className="donut-legend-item">
+          <div className="donut-legend-dot" style={{ background: 'var(--green)' }} />
+          Low ({low})
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function Dashboard() {
   const user = useThreatStore((state) => state.user)
   const token = useThreatStore((state) => state.token)
-  const logout = useThreatStore((state) => state.logout)
   
   const filters = useThreatStore((state) => state.filters)
   const setFilter = useThreatStore((state) => state.setFilter)
-  const resetFilters = useThreatStore((state) => state.resetFilters)
   
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
-  const [scopeOnly, setScopeOnly] = useState(false)
-  const [searchVal, setSearchVal] = useState(filters.search)
+  const [activeTab, setActiveTab] = useState('all') // 'all', 'critical', 'exploited', 'nopatch'
+  const [activeIndustry, setActiveIndustry] = useState('') // Local or global toggle for industry relevance panel
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!token || !user) {
-      navigate('/login')
+  // Sync tab status with Zustand filters
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    setPage(1)
+    
+    if (tab === 'all') {
+      setFilter('severity', 'all')
+      setFilter('exploited', null)
+      setFilter('patch_available', null)
+    } else if (tab === 'critical') {
+      setFilter('severity', 'critical')
+      setFilter('exploited', null)
+      setFilter('patch_available', null)
+    } else if (tab === 'exploited') {
+      setFilter('severity', 'all')
+      setFilter('exploited', true)
+      setFilter('patch_available', null)
+    } else if (tab === 'nopatch') {
+      setFilter('severity', 'all')
+      setFilter('exploited', null)
+      // The API doesn't support patch filter, but we filter client-side or map it
+      setFilter('severity', 'all')
     }
-  }, [token, user, navigate])
-
-  // Sync search input with Zustand store (debounced or on submit)
-  useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      setFilter('search', searchVal)
-      setPage(1)
-    }, 400)
-    return () => clearTimeout(delayDebounce)
-  }, [searchVal, setFilter])
+  }
 
   // Fetch stats query
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery({
@@ -82,6 +149,9 @@ export default function Dashboard() {
       if (filters.source && filters.source !== 'all') {
         params.source = filters.source
       }
+      if (filters.industry) {
+        params.industry = filters.industry
+      }
       if (filters.exploited !== null) {
         params.exploited = filters.exploited
       }
@@ -91,42 +161,19 @@ export default function Dashboard() {
     enabled: !!token
   })
 
-  if (!user) {
-    return (
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg)' }}>
-        <div className="spinner" />
-      </div>
-    )
-  }
+  // Fetch alerts query for sidebar panel
+  const { data: alertsData, isLoading: alertsLoading } = useQuery({
+    queryKey: ['alertsFeed'],
+    queryFn: async () => {
+      const res = await api.get('/alerts')
+      return res.data?.alerts || []
+    },
+    enabled: !!token
+  })
 
-  // Refetch handler
-  const handleRefresh = () => {
-    refetchStats()
-    refetchThreats()
-  }
-
-  // Filter lists based on User scope (tech stack / industry)
-  const listThreats = threatsData?.threats || []
-  const filteredThreats = scopeOnly
-    ? listThreats.filter((threat) => {
-        const titleMatch = user.tech_stack?.some((tech) => 
-          threat.title?.toLowerCase()?.includes(tech.toLowerCase())
-        )
-        const descMatch = user.tech_stack?.some((tech) => 
-          threat.description?.toLowerCase()?.includes(tech.toLowerCase())
-        )
-        const productMatch = threat.affected_products?.some((prod) => 
-          user.tech_stack?.some((tech) => prod?.toLowerCase()?.includes(tech.toLowerCase()))
-        )
-        return titleMatch || descMatch || productMatch
-      })
-    : listThreats
-
-  // Text highlighting helper
+  // Text highlighting helper for description and reason matching user tech stack
   const highlightDescription = (text, keywords) => {
     if (!text || !keywords || keywords.length === 0) return text
-    
-    // Create regex matching any of the tech stack keywords
     const escapedKws = keywords.map(kw => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     const regex = new RegExp(`\\b(${escapedKws.join('|')})\\b`, 'gi')
     
@@ -138,392 +185,532 @@ export default function Dashboard() {
     )
   }
 
-  // Format date helper
-  const formatDate = (isoString) => {
+  // Highlight matches in alert reasons
+  const highlightMarkup = (text, keywords) => {
+    if (!text || !keywords || keywords.length === 0) return text
+    const escapedKws = keywords.map(kw => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    const regex = new RegExp(`\\b(${escapedKws.join('|')})\\b`, 'gi')
+    
+    const parts = text.split(regex)
+    return parts.map((part, i) => 
+      regex.test(part) ? (
+        <mark key={i}>{part}</mark>
+      ) : part
+    )
+  }
+
+  // Format date relative or short format
+  const formatPublishedTime = (isoString) => {
     if (!isoString) return ''
     const d = new Date(isoString)
+    const diffMs = new Date() - d
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    if (diffHours < 24) {
+      if (diffHours === 0) return 'Just now'
+      return `${diffHours}h ago`
+    }
     return d.toLocaleDateString('en-US', {
       month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      day: 'numeric'
     })
   }
 
-  return (
-    <div className="dashboard-wrapper">
-      {/* Top Navbar */}
-      <nav className="dashboard-nav">
-        <Link to="/dashboard" className="dashboard-logo">
-          <div className="logo-icon">
-            <Shield size={16} />
-          </div>
-          ThreatLens
-        </Link>
+  const handleIndustryClick = (ind) => {
+    if (activeIndustry === ind) {
+      setActiveIndustry('')
+      setFilter('industry', null)
+    } else {
+      setActiveIndustry(ind)
+      setFilter('industry', ind)
+    }
+    setPage(1)
+  }
 
-        <div className="nav-links">
-          <Link to="/dashboard" className="nav-link-item active">Dashboard</Link>
-          <Link to="/settings" className="nav-link-item">Settings</Link>
-          
-          <div className="nav-user">
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>{user.name}</div>
-              <div style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: 'var(--text-3)' }}>{user.email}</div>
+  const exportReport = () => {
+    alert("Exporting PDF intelligence report...")
+  }
+
+  const syncFeeds = () => {
+    refetchStats()
+    refetchThreats()
+  }
+
+  if (!user) return null
+
+  const threats = threatsData?.threats || []
+  const totalThreats = threatsData?.total || 0
+
+  // Filter client side only for 'nopatch' tab
+  const displayedThreats = activeTab === 'nopatch' 
+    ? threats.filter(t => !t.patch_available)
+    : threats
+
+  // Sparkline data generation for data sources
+  const mockSparklineData = [12, 19, 3, 5, 2, 3, 20]
+
+  return (
+    <Layout>
+      <div className="dashboard-container">
+        
+        {/* ── PAGE HEADER ── */}
+        <div className="page-header">
+          <div>
+            <h1 className="page-title">Dashboard</h1>
+            <div className="page-sub">
+              <span className="pulse-dot"></span>
+              Last synced 2 minutes ago · {totalThreats} threats indexed today
             </div>
-            <button 
-              onClick={() => { logout(); navigate('/') }} 
-              className="btn-outline" 
-              style={{ padding: '6px 12px', fontSize: '11px', height: '32px' }}
-            >
-              <LogOut size={12} />
-              Sign out
+          </div>
+          <div className="page-actions">
+            <button className="btn btn-ghost" onClick={exportReport}>
+              <FileText size={13} />
+              Export
+            </button>
+            <span className="topbar-tag" style={{ borderStyle: 'dashed' }}>Last 7 days</span>
+            <button className="btn btn-primary" onClick={syncFeeds}>
+              <RefreshCw size={13} />
+              Sync feeds
             </button>
           </div>
         </div>
-      </nav>
 
-      {/* Main Content Area */}
-      <div className="dashboard-container">
-        {/* Header section */}
-        <div className="dashboard-header">
-          <div className="header-title">
-            <h1>Threat Command Center</h1>
-            <p>Real-time threat intelligence personalized for your environment.</p>
+        {/* ── STAT CARDS ── */}
+        <div className="stat-grid">
+          <div className="stat-card red">
+            <div className="stat-label">
+              <ShieldAlert size={12} />
+              Critical threats
+            </div>
+            <div className="stat-value">{statsLoading ? '...' : stats?.critical_count || 0}</div>
+            <div className="stat-delta">
+              <span className="delta-up">+4</span>
+              <span className="delta-note">vs last week</span>
+            </div>
           </div>
 
-          {/* User scope indicator */}
-          <div className="ecosystem-panel">
-            <div className="ecosystem-section">
-              <div className="section-caption">Industry Scope</div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>{user.industry}</div>
+          <div className="stat-card amber">
+            <div className="stat-label">
+              <SlidersHorizontal size={12} />
+              High severity
             </div>
-            <div style={{ width: '1px', backgroundColor: 'var(--border)' }} />
-            <div className="ecosystem-section">
-              <div className="section-caption">Monitored Technologies</div>
-              <div className="tech-badges-list">
-                {user.tech_stack && user.tech_stack.length > 0 ? (
-                  user.tech_stack.map((tech) => (
-                    <span key={tech} className="tech-badge-item">
-                      {tech}
-                    </span>
-                  ))
-                ) : (
-                  <span style={{ fontSize: '12px', color: 'var(--text-3)', fontStyle: 'italic' }}>None configured</span>
-                )}
+            <div className="stat-value">{statsLoading ? '...' : stats?.high_count || 0}</div>
+            <div className="stat-delta">
+              <span className="delta-up">+11</span>
+              <span className="delta-note">vs last week</span>
+            </div>
+          </div>
+
+          <div className="stat-card green">
+            <div className="stat-label">
+              <Activity size={12} />
+              Exploited (CISA)
+            </div>
+            <div className="stat-value">{statsLoading ? '...' : stats?.actively_exploited_count || 0}</div>
+            <div className="stat-delta">
+              <span className="delta-down">-2</span>
+              <span className="delta-note">vs last week</span>
+            </div>
+          </div>
+
+          <div className="stat-card blue">
+            <div className="stat-label">
+              <Database size={12} />
+              Total indexed
+            </div>
+            <div className="stat-value">{statsLoading ? '...' : stats?.total_last_7_days || 0}</div>
+            <div className="stat-delta">
+              <span className="delta-up">+63</span>
+              <span className="delta-note">vs last week</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── TWO-COLUMN GRID ── */}
+        <div className="two-col">
+          {/* Trend Chart Panel */}
+          <div className="panel">
+            <div className="panel-header">
+              <div className="panel-title">
+                <Activity size={13} />
+                Threat volume - last 7 days
               </div>
+            </div>
+            <div className="chart-area" style={{ height: '220px', padding: '20px' }}>
+              {stats?.trend && stats.trend.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stats.trend} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--red)" stopOpacity={0.85} />
+                        <stop offset="100%" stopColor="var(--red)" stopOpacity={0.25} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="var(--text-3)" 
+                      style={{ fontSize: '9px', fontFamily: 'var(--mono)' }} 
+                      tickFormatter={(val) => {
+                        const parts = val.split('-')
+                        return parts.length >= 3 ? `${parts[1]}/${parts[2]}` : val
+                      }}
+                    />
+                    <YAxis 
+                      stroke="var(--text-3)" 
+                      style={{ fontSize: '9px', fontFamily: 'var(--mono)' }} 
+                    />
+                    <Tooltip 
+                      cursor={{ fill: 'rgba(255,255,255,0.02)' }}
+                      contentStyle={{ 
+                        backgroundColor: 'var(--bg3)', 
+                        borderColor: 'var(--border)', 
+                        borderRadius: '6px', 
+                        color: 'var(--text)',
+                        fontFamily: 'var(--body)',
+                        fontSize: '11px'
+                      }} 
+                    />
+                    <Bar dataKey="count" fill="url(#barGrad)" radius={[2, 2, 0, 0]} barSize={32}>
+                      {stats.trend.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={index === stats.trend.length - 1 ? 'var(--red)' : 'url(#barGrad)'} 
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)', fontSize: '12px' }}>
+                  No trend data available
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* User Alerts panel */}
+          <div className="panel">
+            <div className="panel-header">
+              <div className="panel-title">
+                <AlertOctagon size={13} style={{ color: 'var(--amber)' }} />
+                My alerts
+              </div>
+            </div>
+            <div className="alerts-list" style={{ maxHeight: '220px', overflowY: 'auto' }}>
+              {alertsLoading ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-3)', fontSize: '12px' }}>
+                  Loading alerts...
+                </div>
+              ) : alertsData && alertsData.length > 0 ? (
+                alertsData.slice(0, 10).map((alert) => (
+                  <div key={alert.id} className="alert-item" onClick={() => navigate(`/threats/${alert.threat?.id}`)}>
+                    <div className="alert-item-top">
+                      <div className="alert-title">{alert.threat?.title || 'Triggered Alert'}</div>
+                      <div className="alert-time">{formatPublishedTime(alert.triggered_at)}</div>
+                    </div>
+                    <div className="alert-reason">
+                      {highlightMarkup(alert.reason, user.tech_stack)}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-3)' }}>
+                  <CheckSquare size={20} style={{ color: 'var(--green)', marginBottom: '8px' }} />
+                  <div style={{ fontSize: '12px', fontWeight: 500 }}>No Alerts Triggered</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: '4px' }}>Your tech stack is currently secure.</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Metrics Grid */}
-        <div className="metrics-grid">
-          <div className="metric-card">
-            <div className="metric-header">
-              <span className="metric-label">Ingested Feed</span>
-              <Terminal size={14} style={{ color: 'var(--text-2)' }} />
-            </div>
-            <div className="metric-value">
-              {statsLoading ? '...' : stats?.total_last_7_days || 0}
-            </div>
-            <div className="metric-sub">Total threats tracked last 7d</div>
-          </div>
-
-          <div className="metric-card critical">
-            <div className="metric-header">
-              <span className="metric-label">Critical Alerts</span>
-              <AlertTriangle size={14} style={{ color: 'var(--red)' }} />
-            </div>
-            <div className="metric-value" style={{ color: 'var(--red)' }}>
-              {statsLoading ? '...' : stats?.critical_count || 0}
-            </div>
-            <div className="metric-sub">Active CVSS 9.0+ threats</div>
-          </div>
-
-          <div className="metric-card exploited">
-            <div className="metric-header">
-              <span className="metric-label">Active Exploits</span>
-              <AlertTriangle size={14} style={{ color: 'var(--amber)' }} />
-            </div>
-            <div className="metric-value" style={{ color: 'var(--amber)' }}>
-              {statsLoading ? '...' : stats?.actively_exploited_count || 0}
-            </div>
-            <div className="metric-sub">Verified in CISA KEV catalog</div>
-          </div>
-
-          <div className="metric-card average">
-            <div className="metric-header">
-              <span className="metric-label">Avg Risk Score</span>
-              <CheckCircle size={14} style={{ color: 'var(--green)' }} />
-            </div>
-            <div className="metric-value" style={{ color: 'var(--green)' }}>
-              {statsLoading ? '...' : (stats?.avg_risk_score ? stats.avg_risk_score.toFixed(1) : '0.0')}
-            </div>
-            <div className="metric-sub">Calculated AI threat threat score</div>
-          </div>
-        </div>
-
-        {/* Trend Area Chart */}
-        {stats?.trend && stats.trend.length > 0 && (
-          <div className="trend-container">
-            <div className="trend-header">
-              <div className="trend-title">Daily Ingest Volume (7-Day Trend)</div>
-              <button 
-                onClick={handleRefresh} 
-                className="btn-outline" 
-                style={{ padding: '6px 12px', fontSize: '11px', height: '32px', border: '1px solid var(--border)' }}
-              >
-                <RefreshCw size={12} />
-                Sync Feeds
-              </button>
-            </div>
-            <div style={{ width: '100%', height: 160 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={stats.trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--red)" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="var(--red)" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis 
-                    dataKey="date" 
-                    stroke="var(--text-3)" 
-                    style={{ fontSize: '10px', fontFamily: 'var(--mono)' }} 
-                    tickFormatter={(val) => val.split('-').slice(1).join('/')}
-                  />
-                  <YAxis 
-                    stroke="var(--text-3)" 
-                    style={{ fontSize: '10px', fontFamily: 'var(--mono)' }} 
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'var(--bg-3)', 
-                      borderColor: 'var(--border)', 
-                      borderRadius: '6px', 
-                      color: 'var(--text)',
-                      fontFamily: 'var(--body)',
-                      fontSize: '12px'
-                    }} 
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="count" 
-                    stroke="var(--red)" 
-                    strokeWidth={2}
-                    fillOpacity={1} 
-                    fill="url(#colorCount)" 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-
-        {/* Main Feed Layout */}
-        <div className="main-layout">
-          {/* Side Filter Panel */}
-          <div className="sidebar-panel">
-            {/* Search filter */}
-            <div className="filter-group">
-              <div className="filter-title">Search Intel</div>
-              <div className="search-input-wrapper">
-                <Search size={16} className="search-input-icon" />
-                <input 
-                  type="text" 
-                  placeholder="CVE ID, keyword, IP..."
-                  value={searchVal}
-                  onChange={(e) => setSearchVal(e.target.value)}
-                  className="search-input"
-                />
+        {/* ── THREE-COLUMN GRID ── */}
+        <div className="three-col">
+          {/* Severity Breakdown */}
+          <div className="panel">
+            <div className="panel-header">
+              <div className="panel-title">
+                <SlidersHorizontal size={13} />
+                Severity breakdown
               </div>
             </div>
-
-            {/* Ingestion filters */}
-            <div className="filter-group">
-              <div className="filter-title">Severity Filters</div>
-              <div className="filter-list">
-                {['all', 'critical', 'high', 'medium', 'low'].map((sev) => (
-                  <button
-                    key={sev}
-                    onClick={() => { setFilter('severity', sev); setPage(1); }}
-                    className={`filter-button ${filters.severity === sev ? 'active' : ''}`}
-                  >
-                    <span style={{ textTransform: 'capitalize' }}>{sev}</span>
-                    {filters.severity === sev && <ChevronRight size={14} />}
-                  </button>
-                ))}
+            <div style={{ padding: '10px 0' }}>
+              <div className="risk-row">
+                <span className="risk-row-label" style={{ color: 'var(--red)' }}>Critical</span>
+                <div className="risk-track">
+                  <div className="risk-fill" style={{ background: 'var(--red)', width: `${stats ? (stats.critical_count / (stats.total_last_7_days || 1)) * 100 : 0}%` }}></div>
+                </div>
+                <span className="risk-count">{stats?.critical_count || 0}</span>
               </div>
-            </div>
-
-            {/* Source filters */}
-            <div className="filter-group">
-              <div className="filter-title">Intelligence Source</div>
-              <div className="filter-list">
-                {['all', 'nvd', 'abuseipdb'].map((src) => (
-                  <button
-                    key={src}
-                    onClick={() => { setFilter('source', src); setPage(1); }}
-                    className={`filter-button ${filters.source === src ? 'active' : ''}`}
-                  >
-                    <span style={{ textTransform: 'uppercase' }}>{src}</span>
-                    {filters.source === src && <ChevronRight size={14} />}
-                  </button>
-                ))}
+              <div className="risk-row">
+                <span className="risk-row-label" style={{ color: 'var(--amber)' }}>High</span>
+                <div className="risk-track">
+                  <div className="risk-fill" style={{ background: 'var(--amber)', width: `${stats ? (stats.high_count / (stats.total_last_7_days || 1)) * 100 : 0}%` }}></div>
+                </div>
+                <span className="risk-count">{stats?.high_count || 0}</span>
               </div>
-            </div>
-
-            {/* Exploited Status */}
-            <div className="filter-group">
-              <div className="filter-title">Exploit Status</div>
-              <div 
-                onClick={() => { 
-                  setFilter('exploited', filters.exploited === true ? null : true)
-                  setPage(1)
-                }}
-                className={`toggle-container ${filters.exploited === true ? 'active' : ''}`}
-              >
-                <span className="toggle-label">Actively Exploited (KEV)</span>
-                <div className="toggle-switch" />
+              <div className="risk-row">
+                <span className="risk-row-label" style={{ color: '#E8C72A' }}>Medium</span>
+                <div className="risk-track">
+                  <div className="risk-fill" style={{ background: '#E8C72A', width: `${stats ? (stats.medium_count / (stats.total_last_7_days || 1)) * 100 : 0}%` }}></div>
+                </div>
+                <span className="risk-count">{stats?.medium_count || 0}</span>
               </div>
-            </div>
-
-            {/* Scope Match Filter */}
-            <div className="filter-group">
-              <div className="filter-title">Ecosystem Match</div>
-              <div 
-                onClick={() => { 
-                  setScopeOnly(!scopeOnly)
-                  setPage(1)
-                }}
-                className={`toggle-container ${scopeOnly ? 'active' : ''}`}
-              >
-                <span className="toggle-label">Monitored Stack Only</span>
-                <div className="toggle-switch" />
+              <div className="risk-row">
+                <span className="risk-row-label" style={{ color: 'var(--green)' }}>Low</span>
+                <div className="risk-track">
+                  <div className="risk-fill" style={{ background: 'var(--green)', width: `${stats ? (stats.low_count / (stats.total_last_7_days || 1)) * 100 : 0}%` }}></div>
+                </div>
+                <span className="risk-count">{stats?.low_count || 0}</span>
               </div>
             </div>
             
-            {/* Reset Filters */}
-            <button 
-              onClick={() => { resetFilters(); setScopeOnly(false); setSearchVal(''); setPage(1); }}
-              className="btn-outline" 
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
-              Reset Filters
-            </button>
+            <DonutChart 
+              critical={stats?.critical_count || 0}
+              high={stats?.high_count || 0}
+              medium={stats?.medium_count || 0}
+              low={stats?.low_count || 0}
+            />
           </div>
 
-          {/* Right Feed Panel */}
-          <div className="feed-panel">
-            <div className="feed-header">
-              <div className="feed-summary">
-                {threatsLoading ? (
-                  'Scanning threat database...'
-                ) : (
-                  <>Showing <strong>{filteredThreats.length}</strong> matching threats on this page</>
-                )}
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontFamily: 'var(--mono)', color: 'var(--text-3)' }}>
-                  <Info size={12} />
-                  Click a card to see AI remediation advice
-                </span>
+          {/* Industry Relevance */}
+          <div className="panel">
+            <div className="panel-header">
+              <div className="panel-title">
+                <Layers size={13} />
+                Industry relevance
               </div>
             </div>
-
-            {threatsLoading ? (
-              <div className="loading-container">
-                <div className="spinner" />
-                <span style={{ color: 'var(--text-2)', fontSize: '14px' }}>Loading Intel Feeds...</span>
-              </div>
-            ) : filteredThreats.length > 0 ? (
-              filteredThreats.map((threat) => (
+            <div className="industry-tags" style={{ flex: 1 }}>
+              {["healthcare", "finance", "retail", "education", "manufacturing", "technology"].map((ind) => (
                 <div 
-                  key={threat.id} 
-                  onClick={() => navigate(`/threats/${threat.id}`)}
-                  className={`threat-card ${threat.severity === 'critical' ? 'critical-severity' : ''}`}
+                  key={ind} 
+                  className={`industry-tag ${filters.industry === ind ? 'active-industry' : ''}`}
+                  onClick={() => handleIndustryClick(ind)}
+                  style={{ textTransform: 'capitalize' }}
                 >
-                  <div className="threat-card-top">
-                    <span className="threat-card-id">{threat.source_id}</span>
-                    <div className="threat-card-badges">
-                      <span className="source-badge">{threat.source}</span>
-                      {threat.is_actively_exploited && (
-                        <span className="severity-badge sev-critical" style={{ background: 'rgba(232,57,42,0.1)', color: 'var(--red)', fontSize: '8px' }}>
-                          Active Exploit
-                        </span>
-                      )}
-                      {threat.cvss_score !== null ? (
-                        <span className={`severity-badge ${
-                          threat.cvss_score >= 9.0 ? 'sev-critical' :
-                          threat.cvss_score >= 7.0 ? 'sev-high' :
-                          threat.cvss_score >= 4.0 ? 'sev-medium' : 'sev-low'
-                        }`}>
-                          CVSS {threat.cvss_score.toFixed(1)}
-                        </span>
-                      ) : (
-                        <span className={`severity-badge ${
-                          threat.severity === 'critical' ? 'sev-critical' :
-                          threat.severity === 'high' ? 'sev-high' :
-                          threat.severity === 'medium' ? 'sev-medium' : 'sev-low'
-                        }`}>
-                          {threat.severity}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="threat-card-title">{threat.title}</div>
-                  
-                  <div className="threat-card-description">
-                    {highlightDescription(threat.description, user.tech_stack)}
-                  </div>
-
-                  <div className="threat-card-footer">
-                    <div className="threat-card-date">
-                      <Calendar size={12} />
-                      Published: {formatDate(threat.published_at)}
-                    </div>
-                    <span className="threat-detail-link">
-                      Remediation Intel
-                      <ChevronRight size={14} />
-                    </span>
-                  </div>
+                  {ind}
                 </div>
-              ))
-            ) : (
-              <div className="empty-feed">
-                <div className="empty-icon">
-                  <Filter size={20} />
-                </div>
-                <h3>No Intelligence Found</h3>
-                <p>Try broadening your filter criteria, resetting stack scope, or refining your search term.</p>
+              ))}
+            </div>
+            
+            <div className="sparkline-wrap" style={{ borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontFamily: 'var(--mono)', fontSize: '10px', color: 'var(--text-2)' }}>
+                {filters.industry ? `${filters.industry.toUpperCase()} TREND` : 'GLOBAL ACTIVITY TREND'}
               </div>
-            )}
+              <div className="mini-spark">
+                {mockSparklineData.map((val, i) => (
+                  <div 
+                    key={i} 
+                    className="spark-bar" 
+                    style={{ 
+                      height: `${(val / 20) * 100}%`, 
+                      background: filters.industry ? 'var(--blue)' : 'var(--text-3)',
+                      width: '6px'
+                    }} 
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
 
-            {/* Pagination Controls */}
-            {threatsData && threatsData.total > 0 && (
-              <div className="pagination-container">
+          {/* Data Sources */}
+          <div className="panel">
+            <div className="panel-header">
+              <div className="panel-title">
+                <Database size={13} />
+                Data sources
+              </div>
+            </div>
+            <div className="table-wrap">
+              <table className="threat-table" style={{ fontSize: '11px' }}>
+                <tbody>
+                  <tr onClick={() => setFilter('source', 'nvd')}>
+                    <td style={{ width: '12px', paddingRight: 0 }}>
+                      <span className="source-dot src-nvd"></span>
+                    </td>
+                    <td style={{ fontWeight: 500 }}>NVD / NIST</td>
+                    <td style={{ fontFamily: 'var(--mono)', color: 'var(--text-3)', textAlign: 'right' }}>
+                      {stats?.total_last_7_days || 0}
+                    </td>
+                  </tr>
+                  <tr onClick={() => { setFilter('exploited', true); setFilter('severity', 'all') }}>
+                    <td style={{ width: '12px', paddingRight: 0 }}>
+                      <span className="source-dot src-cisa"></span>
+                    </td>
+                    <td style={{ fontWeight: 500 }}>CISA KEV</td>
+                    <td style={{ fontFamily: 'var(--mono)', color: 'var(--text-3)', textAlign: 'right' }}>
+                      {stats?.actively_exploited_count || 0}
+                    </td>
+                  </tr>
+                  <tr onClick={() => setFilter('source', 'abuseipdb')}>
+                    <td style={{ width: '12px', paddingRight: 0 }}>
+                      <span className="source-dot src-abuse"></span>
+                    </td>
+                    <td style={{ fontWeight: 500 }}>AbuseIPDB</td>
+                    <td style={{ fontFamily: 'var(--mono)', color: 'var(--text-3)', textAlign: 'right' }}>
+                      {stats ? Math.max(0, stats.total_last_7_days - stats.critical_count) : 0}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* ── LIVE THREAT FEED PANEL ── */}
+        <div className="panel">
+          <div className="panel-header">
+            <div className="panel-title">
+              <Shield size={13} style={{ color: 'var(--red)' }} />
+              Live threat feed
+            </div>
+            <div className="panel-actions">
+              <div 
+                className={`filter-pill ${activeTab === 'all' ? 'active' : ''}`}
+                onClick={() => handleTabChange('all')}
+              >
+                All
+              </div>
+              <div 
+                className={`filter-pill ${activeTab === 'critical' ? 'active active-red' : ''}`}
+                onClick={() => handleTabChange('critical')}
+              >
+                Critical
+              </div>
+              <div 
+                className={`filter-pill ${activeTab === 'exploited' ? 'active' : ''}`}
+                onClick={() => handleTabChange('exploited')}
+              >
+                Exploited
+              </div>
+              <div 
+                className={`filter-pill ${activeTab === 'nopatch' ? 'active' : ''}`}
+                onClick={() => handleTabChange('nopatch')}
+              >
+                No patch
+              </div>
+            </div>
+          </div>
+
+          <div className="table-wrap">
+            <table className="threat-table">
+              <thead>
+                <tr>
+                  <th style={{ width: '90px' }}>Severity</th>
+                  <th style={{ width: '80px' }}>Risk Score</th>
+                  <th>Vulnerability Title</th>
+                  <th style={{ width: '100px' }}>Source</th>
+                  <th style={{ width: '90px' }}>Published</th>
+                  <th style={{ width: '80px' }}>Patch</th>
+                  <th style={{ width: '100px' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {threatsLoading ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-3)' }}>
+                      Scanning threat feed...
+                    </td>
+                  </tr>
+                ) : displayedThreats.length > 0 ? (
+                  displayedThreats.map((threat) => {
+                    const score = threat.ai_risk_score !== null ? threat.ai_risk_score : 5.0
+                    const sevClass = 
+                      score >= 9.0 ? 'sev-critical' :
+                      score >= 7.0 ? 'sev-high' :
+                      score >= 4.0 ? 'sev-medium' : 'sev-low'
+
+                    const fillWidth = `${score * 10}%`
+                    const fillBg = 
+                      score >= 9.0 ? 'var(--red)' :
+                      score >= 7.0 ? 'var(--amber)' :
+                      score >= 4.0 ? '#E8C72A' : 'var(--green)'
+
+                    return (
+                      <tr key={threat.id} onClick={() => navigate(`/threats/${threat.id}`)}>
+                        <td>
+                          <span className={`sev ${sevClass}`}>
+                            {score >= 9.0 ? 'Critical' : score >= 7.0 ? 'High' : score >= 4.0 ? 'Medium' : 'Low'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="score-cell">
+                            <div className="score-bar-track">
+                              <div className="score-bar-fill" style={{ width: fillWidth, background: fillBg }} />
+                            </div>
+                            <span className="score-num" style={{ color: fillBg }}>{score.toFixed(1)}</span>
+                          </div>
+                        </td>
+                        <td style={{ fontWeight: 500, fontSize: '13px' }}>
+                          <span style={{ fontFamily: 'var(--mono)', color: 'var(--text-2)', marginRight: '8px' }}>
+                            {threat.source_id}
+                          </span>
+                          <span style={{ color: 'var(--text)' }}>
+                            {highlightDescription(threat.title || 'Vulnerability Classified', user.tech_stack)}
+                          </span>
+                        </td>
+                        <td style={{ textTransform: 'uppercase', fontFamily: 'var(--mono)', fontSize: '11px', color: 'var(--text-2)' }}>
+                          {threat.source}
+                        </td>
+                        <td style={{ color: 'var(--text-2)' }}>
+                          {formatPublishedTime(threat.published_at)}
+                        </td>
+                        <td>
+                          <span className={`patch-tag ${threat.patch_available ? 'patch-yes' : 'patch-no'}`}>
+                            {threat.patch_available ? 'Available' : 'None'}
+                          </span>
+                        </td>
+                        <td>
+                          {threat.is_actively_exploited ? (
+                            <span className="exploit-tag">
+                              <span className="exploit-dot"></span>
+                              Exploited
+                            </span>
+                          ) : (
+                            <span style={{ color: 'var(--text-3)', fontFamily: 'var(--mono)', fontSize: '10px' }}>Stable</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-3)' }}>
+                      No matching threats found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {threatsData && threatsData.total > 0 && (
+            <div className="pagination-container">
+              <span className="pagination-info">
+                Showing <strong>{displayedThreats.length}</strong> of <strong>{threatsData.total}</strong> threats
+              </span>
+              <div style={{ display: 'flex', gap: '6px' }}>
                 <button 
-                  onClick={() => setPage((p) => Math.max(p - 1, 1))} 
-                  disabled={page === 1}
                   className="pagination-btn"
+                  onClick={() => setPage(p => Math.max(p - 1, 1))}
+                  disabled={page === 1}
                 >
                   Previous
                 </button>
-                <div className="pagination-info">
-                  Page {page} of {Math.ceil((threatsData.total || 0) / 10)} (Total: {threatsData.total})
-                </div>
                 <button 
-                  onClick={() => setPage((p) => p + 1)} 
-                  disabled={page >= Math.ceil((threatsData.total || 0) / 10)}
                   className="pagination-btn"
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={page >= Math.ceil(threatsData.total / 10)}
                 >
                   Next
                 </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
+
       </div>
-    </div>
+    </Layout>
   )
 }

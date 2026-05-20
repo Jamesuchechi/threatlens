@@ -1,9 +1,7 @@
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { 
   ArrowLeft, 
-  Shield, 
-  LogOut,
   AlertTriangle,
   ExternalLink,
   Cpu,
@@ -12,13 +10,13 @@ import {
 } from 'lucide-react'
 import { useThreatStore } from '../store/threatStore'
 import api from '../services/api'
+import Layout from '../components/common/Layout'
 import './ThreatDetail.css'
 
 export default function ThreatDetail() {
   const { id } = useParams()
   const user = useThreatStore((state) => state.user)
   const token = useThreatStore((state) => state.token)
-  const logout = useThreatStore((state) => state.logout)
   const navigate = useNavigate()
 
   // Redirect if not authenticated
@@ -51,27 +49,29 @@ export default function ThreatDetail() {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg)' }}>
-        <div className="spinner" />
-      </div>
+      <Layout>
+        <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <div className="spinner" />
+        </div>
+      </Layout>
     )
   }
 
   if (error || !threat) {
     return (
-      <div className="detail-wrapper">
-        <div className="detail-container" style={{ textAlign: 'center', paddingTop: '100px' }}>
+      <Layout>
+        <div style={{ textAlign: 'center', paddingTop: '60px' }}>
           <AlertTriangle size={48} style={{ color: 'var(--red)', marginBottom: '20px' }} />
-          <h2 style={{ fontFamily: 'var(--display)', marginBottom: '10px' }}>Threat Intelligence Not Found</h2>
+          <h2 style={{ fontFamily: 'var(--display)', marginBottom: '10px', color: 'var(--text)' }}>Threat Intelligence Not Found</h2>
           <p style={{ color: 'var(--text-2)', marginBottom: '24px' }}>
             The requested intelligence item could not be retrieved. It may have been archived or deleted.
           </p>
-          <Link to="/dashboard" className="btn-outline">
+          <button onClick={() => navigate('/dashboard')} className="btn btn-ghost">
             <ArrowLeft size={16} />
             Back to Dashboard
-          </Link>
+          </button>
         </div>
-      </div>
+      </Layout>
     )
   }
 
@@ -88,40 +88,9 @@ export default function ThreatDetail() {
   const sevInfo = getSeverityStyle(threat.cvss_score, threat.severity)
 
   return (
-    <div className="detail-wrapper">
-      {/* Top Navbar */}
-      <nav className="dashboard-nav">
-        <Link to="/dashboard" className="dashboard-logo">
-          <div className="logo-icon">
-            <Shield size={16} />
-          </div>
-          ThreatLens
-        </Link>
-
-        <div className="nav-links">
-          <Link to="/dashboard" className="nav-link-item">Dashboard</Link>
-          <Link to="/settings" className="nav-link-item">Settings</Link>
-          
-          <div className="nav-user">
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>{user.name}</div>
-              <div style={{ fontSize: '11px', fontFamily: 'var(--mono)', color: 'var(--text-3)' }}>{user.email}</div>
-            </div>
-            <button 
-              onClick={() => { logout(); navigate('/') }} 
-              className="btn-outline" 
-              style={{ padding: '6px 12px', fontSize: '11px', height: '32px' }}
-            >
-              <LogOut size={12} />
-              Sign out
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Container */}
-      <div className="detail-container">
-        <button onClick={() => navigate('/dashboard')} className="back-link">
+    <Layout>
+      <div className="detail-container" style={{ padding: 0, margin: 0, maxWidth: '100%' }}>
+        <button onClick={() => navigate('/dashboard')} className="back-link" style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-3)', fontFamily: 'var(--mono)', fontSize: '11px', textTransform: 'uppercase', marginBottom: '20px' }}>
           <ArrowLeft size={14} />
           Back to Dashboard
         </button>
@@ -140,8 +109,8 @@ export default function ThreatDetail() {
                   )}
                 </div>
               </div>
-              <h2 className="detail-title">{threat.title}</h2>
-              <div className="detail-timestamps">
+              <h2 className="detail-title" style={{ marginTop: '12px' }}>{threat.title}</h2>
+              <div className="detail-timestamps" style={{ marginTop: '12px' }}>
                 <span>Published: {formatDate(threat.published_at)}</span>
                 <span>Ingested: {formatDate(threat.ingested_at)}</span>
               </div>
@@ -188,7 +157,7 @@ export default function ThreatDetail() {
                 {threat.cvss_vector && (
                   <>
                     <div className="detail-section-title">CVSS Base Vector</div>
-                    <div style={{ fontFamily: 'var(--mono)', fontSize: '12px', wordBreak: 'break-all', color: 'var(--text-2)', background: 'var(--bg-3)', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '11px', wordBreak: 'break-all', color: 'var(--text-2)', background: 'var(--bg3)', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border)' }}>
                       {threat.cvss_vector}
                     </div>
                   </>
@@ -259,7 +228,7 @@ export default function ThreatDetail() {
               <div className="ai-body">
                 {threat.ai_summary ? (
                   <>
-                    <p style={{ marginBottom: '16px' }}>{threat.ai_summary}</p>
+                    <p style={{ marginBottom: '16px', fontSize: '13px', lineHeight: '1.6' }}>{threat.ai_summary}</p>
                     
                     {threat.ai_recommendations && threat.ai_recommendations.length > 0 && (
                       <>
@@ -293,6 +262,6 @@ export default function ThreatDetail() {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   )
 }

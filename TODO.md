@@ -103,7 +103,6 @@ _Goal: A working backend that ingests real threat data and stores it. No AI yet.
 
 **End of Day 3 checkpoint:** Running ingestion manually populates 50–200 real CVEs in the database. `GET /threats` returns them via API.
 
-
 ---
 
 ### Day 4 — AbuseIPDB + Polish + Frontend Bootstrap
@@ -131,7 +130,6 @@ _Goal: A working backend that ingests real threat data and stores it. No AI yet.
 
 **End of Day 4 checkpoint:** Full ingestion pipeline works. Frontend shell exists and successfully fetches real threat data from the backend.
 
-
 ---
 
 ## 🧠 Phase 2 — Intelligence Layer (Days 5–9)
@@ -144,8 +142,8 @@ _Goal: The AI engine is live. The dashboard is built and beautiful. Users can se
 
 **Morning**
 
-- [ ] Sign up for Anthropic API, get `ANTHROPIC_API_KEY`
-- [ ] Install `anthropic` Python SDK
+- [ ] Sign up for GROQ API, get `GROQ_API_KEY`
+- [ ] Install `GROQ` Python SDK
 - [ ] Write `ai_summarizer.py`:
   - [ ] Design and finalize the system prompt (see DOCUMENTATION.md section 6)
   - [ ] `summarize_threat(raw_threat: dict) -> AISummary` function
