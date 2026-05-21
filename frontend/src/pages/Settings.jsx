@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { 
   ArrowLeft, 
   Save, 
-  CheckCircle, 
-  AlertCircle, 
   Plus, 
   X, 
   Lock, 
@@ -20,6 +18,7 @@ export default function Settings() {
   const user = useThreatStore((state) => state.user)
   const token = useThreatStore((state) => state.token)
   const setAuth = useThreatStore((state) => state.setAuth)
+  const addToast = useThreatStore((state) => state.addToast)
   const navigate = useNavigate()
 
   // State fields
@@ -32,8 +31,6 @@ export default function Settings() {
 
   // UI state
   const [isSaving, setIsSaving] = useState(false)
-  const [errorMsg, setErrorMsg] = useState('')
-  const [successMsg, setSuccessMsg] = useState('')
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -41,6 +38,14 @@ export default function Settings() {
       navigate('/login')
     }
   }, [token, user, navigate])
+
+  useEffect(() => {
+    document.title = "Settings & Stack | ThreatLens"
+    const metaDesc = document.querySelector('meta[name="description"]')
+    if (metaDesc) {
+      metaDesc.setAttribute('content', 'Configure your organization tech stack, alert preferences, and email/webhook dispatchers.')
+    }
+  }, [])
 
   const handleAddTech = (e) => {
     e.preventDefault()
@@ -58,8 +63,6 @@ export default function Settings() {
   const handleSave = async (e) => {
     e.preventDefault()
     setIsSaving(true)
-    setErrorMsg('')
-    setSuccessMsg('')
 
     try {
       const res = await api.put('/auth/me', {
@@ -72,14 +75,11 @@ export default function Settings() {
       
       // Update state in Zustand store and localstorage
       setAuth(res.data, token)
-      setSuccessMsg('Settings updated successfully.')
-      
-      setTimeout(() => {
-        setSuccessMsg('')
-      }, 4000)
+      addToast('Settings and preferences saved successfully.', 'success')
     } catch (err) {
       console.error(err)
-      setErrorMsg(err.response?.data?.detail || 'Failed to save settings. Please try again.')
+      const detail = err.response?.data?.detail || 'Failed to save settings. Please try again.'
+      addToast(detail, 'error')
     } finally {
       setIsSaving(false)
     }
@@ -99,19 +99,6 @@ export default function Settings() {
           Account Settings
         </h1>
 
-        {successMsg && (
-          <div className="settings-success-alert">
-            <CheckCircle size={16} />
-            {successMsg}
-          </div>
-        )}
-
-        {errorMsg && (
-          <div className="settings-success-alert" style={{ background: 'rgba(232, 57, 42, 0.08)', borderColor: 'rgba(232, 57, 42, 0.2)', color: 'var(--red)' }}>
-            <AlertCircle size={16} />
-            {errorMsg}
-          </div>
-        )}
 
         <form onSubmit={handleSave} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }}>
           

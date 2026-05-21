@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useThreatStore } from '../store/threatStore'
 import api from '../services/api'
@@ -27,6 +27,14 @@ export default function Register() {
   const [techStack, setTechStack] = useState(['React', 'PostgreSQL'])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    document.title = "Register | ThreatLens"
+    const metaDesc = document.querySelector('meta[name="description"]')
+    if (metaDesc) {
+      metaDesc.setAttribute('content', 'Create an account on ThreatLens to get real-time, automated security alerts tailored to your exact infrastructure.')
+    }
+  }, [])
 
   const setAuth = useThreatStore((state) => state.setAuth)
   const navigate = useNavigate()

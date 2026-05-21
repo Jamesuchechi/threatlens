@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { 
@@ -14,6 +14,7 @@ import {
 import { useThreatStore } from '../store/threatStore'
 import api from '../services/api'
 import Layout from '../components/common/Layout'
+import { ThreatDetailSkeleton } from '../components/common/Skeletons'
 import './ThreatDetail.css'
 
 export default function ThreatDetail() {
@@ -38,6 +39,18 @@ export default function ThreatDetail() {
     enabled: !!id
   })
 
+  useEffect(() => {
+    if (threat) {
+      document.title = `${threat.source_id || 'Threat Detail'} | ThreatLens`
+      const metaDesc = document.querySelector('meta[name="description"]')
+      if (metaDesc) {
+        metaDesc.setAttribute('content', `Detailed analysis, severity scores, and patching instructions for vulnerability ${threat.source_id || ''}.`)
+      }
+    } else {
+      document.title = "Threat Details | ThreatLens"
+    }
+  }, [threat])
+
   // Format date helper
   const formatDate = (isoString) => {
     if (!isoString) return ''
@@ -54,9 +67,7 @@ export default function ThreatDetail() {
   if (isLoading) {
     return (
       <Layout>
-        <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <div className="spinner" />
-        </div>
+        <ThreatDetailSkeleton />
       </Layout>
     )
   }

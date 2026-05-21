@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -12,6 +13,8 @@ import {
 import { useThreatStore } from '../store/threatStore'
 import api from '../services/api'
 import Layout from '../components/common/Layout'
+import { AlertListSkeleton } from '../components/common/Skeletons'
+import RiskBadge from '../components/common/RiskBadge'
 
 // ─── Severity colour map ───────────────────────────────────────────────────
 const SEV_STYLE = {
@@ -81,14 +84,7 @@ function AlertItem({ alert, onClick }) {
 
         {/* Severity + reason row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-          <span style={{
-            fontSize: 10, fontFamily: 'var(--mono)', fontWeight: 600,
-            color: sev.color, background: sev.bg,
-            padding: '2px 8px', borderRadius: 4,
-            border: `1px solid ${sev.color}30`,
-          }}>
-            {sev.label}
-          </span>
+          <RiskBadge severity={alert.threat?.severity} showIcon={true} />
           <span style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.4 }}>
             {alert.reason}
           </span>
@@ -115,6 +111,14 @@ export default function AlertFeed() {
     enabled: !!token,
     refetchInterval: 30000,
   })
+
+  useEffect(() => {
+    document.title = "Personal Alerts | ThreatLens"
+    const metaDesc = document.querySelector('meta[name="description"]')
+    if (metaDesc) {
+      metaDesc.setAttribute('content', 'View personalized security alerts matching your monitored tech stack and infrastructure.')
+    }
+  }, [])
 
   if (!user) return null
 
@@ -176,10 +180,7 @@ export default function AlertFeed() {
 
           {/* Alert list */}
           {isLoading ? (
-            <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>
-              Loading alerts…
-            </div>
-
+            <AlertListSkeleton count={4} />
           ) : error ? (
             <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--red)', fontSize: 13 }}>
               Failed to load alerts. Please refresh.

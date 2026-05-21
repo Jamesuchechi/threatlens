@@ -7,6 +7,10 @@ import Dashboard from './pages/Dashboard'
 import ThreatDetail from './pages/ThreatDetail'
 import Settings from './pages/Settings'
 import AlertFeed from './pages/AlertFeed'
+import Monitor from './pages/Monitor'
+import CVEExplorer from './pages/CVEExplorer'
+import PatchTracker from './pages/PatchTracker'
+import Integrations from './pages/Integrations'
 import ErrorBoundary from './components/common/ErrorBoundary'
 
 const queryClient = new QueryClient({
@@ -31,6 +35,10 @@ function App() {
             <Route path="/threats/:id" element={<ThreatDetail />} />
             <Route path="/alerts" element={<AlertFeed />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/monitor" element={<Monitor />} />
+            <Route path="/cve-explorer" element={<CVEExplorer />} />
+            <Route path="/patch-tracker" element={<PatchTracker />} />
+            <Route path="/integrations" element={<Integrations />} />
           </Routes>
         </Router>
       </QueryClientProvider>
@@ -39,3 +47,4 @@ function App() {
 }
 
 export default App
+

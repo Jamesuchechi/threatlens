@@ -38,4 +38,23 @@ export const useThreatStore = create((set) => ({
     })),
     
   resetFilters: () => set({ filters: { ...initialFilters } }),
+
+  // Toast notifications State
+  toasts: [],
+  addToast: (message, type = 'success', duration = 3000) => {
+    const id = Date.now();
+    set((state) => ({
+      toasts: [...state.toasts, { id, message, type }]
+    }));
+    setTimeout(() => {
+      set((state) => ({
+        toasts: state.toasts.filter((t) => t.id !== id)
+      }));
+    }, duration);
+  },
+  removeToast: (id) => {
+    set((state) => ({
+      toasts: state.toasts.filter((t) => t.id !== id)
+    }));
+  }
 }));

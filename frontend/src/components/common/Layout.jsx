@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { 
@@ -15,10 +15,13 @@ import {
   Cpu, 
   Layers, 
   Settings as SettingsIcon,
-  LogOut
+  LogOut,
+  Sun,
+  Moon
 } from 'lucide-react'
 import { useThreatStore } from '../../store/threatStore'
 import api from '../../services/api'
+import ToastContainer from './Toast'
 
 export default function Layout({ children, onSearchChange }) {
   const location = useLocation()
@@ -30,6 +33,22 @@ export default function Layout({ children, onSearchChange }) {
   const logout = useThreatStore((state) => state.logout)
   const filters = useThreatStore((state) => state.filters)
   const setFilter = useThreatStore((state) => state.setFilter)
+
+  // Theme State
+  const [theme, setTheme] = useState(() => localStorage.getItem('threatlens_theme') || 'dark')
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light')
+    } else {
+      document.documentElement.classList.remove('light')
+    }
+    localStorage.setItem('threatlens_theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme(t => t === 'dark' ? 'light' : 'dark')
+  }
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -143,6 +162,10 @@ export default function Layout({ children, onSearchChange }) {
         </div>
 
         <div className="topbar-right">
+          <button className="topbar-icon-btn" title="Toggle Light/Dark Theme" onClick={toggleTheme}>
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+          
           <button className="topbar-icon-btn" title="Refresh/Sync Dashboard" onClick={triggerSync}>
             <RefreshCw size={16} />
           </button>
@@ -154,9 +177,9 @@ export default function Layout({ children, onSearchChange }) {
           
           <div className="divider-v"></div>
           
-          <div className="avatar" title={user.name} onClick={() => navigate('/settings')}>
+          <Link to="/settings" className="avatar" title={user.name}>
             {userInitials}
-          </div>
+          </Link>
         </div>
       </header>
 
@@ -192,29 +215,32 @@ export default function Layout({ children, onSearchChange }) {
             {alertsCount > 0 && <span className="nav-badge" style={{ background: 'rgba(232,140,42,0.15)', color: 'var(--amber)', border: '1px solid rgba(232,140,42,0.25)' }}>{alertsCount}</span>}
           </Link>
 
-          <div className="nav-item" onClick={() => alert("Real-time network security monitoring is currently in beta.")}>
+          <Link 
+            to="/monitor" 
+            className={`nav-item ${location.pathname === '/monitor' ? 'active' : ''}`}
+          >
             <Activity size={15} />
             Monitor
             <span className="nav-badge neutral">Beta</span>
-          </div>
+          </Link>
 
-          <div className="nav-item" onClick={() => alert("CVE Explorer index is currently being crawled.")}>
+          <Link 
+            to="/cve-explorer" 
+            className={`nav-item ${location.pathname === '/cve-explorer' ? 'active' : ''}`}
+          >
             <FileSearch size={15} />
             CVE Explorer
-          </div>
+          </Link>
 
           <div className="sidebar-section-label">My profile</div>
 
-          <div 
-            className="nav-item"
-            onClick={() => {
-              // Set patch_available filter in threat feed table
-              setFilter('source', 'nvd')
-            }}
+          <Link 
+            to="/patch-tracker" 
+            className={`nav-item ${location.pathname === '/patch-tracker' ? 'active' : ''}`}
           >
             <CheckSquare size={15} />
             Patch Tracker
-          </div>
+          </Link>
 
           <Link 
             to="/settings" 
@@ -226,10 +252,13 @@ export default function Layout({ children, onSearchChange }) {
 
           <div className="sidebar-section-label">Config</div>
           
-          <div className="nav-item" onClick={() => navigate('/settings')}>
+          <Link 
+            to="/integrations" 
+            className={`nav-item ${location.pathname === '/integrations' ? 'active' : ''}`}
+          >
             <Cpu size={15} />
             Integrations
-          </div>
+          </Link>
 
           <Link 
             to="/settings" 
@@ -245,10 +274,13 @@ export default function Layout({ children, onSearchChange }) {
             Sign Out
           </div>
 
-          {/* Sidebar Footer with Authenticated User Details */}
-          <div className="sidebar-footer">
+          <div 
+            className="sidebar-footer" 
+            onClick={() => navigate('/settings')}
+            style={{ cursor: 'pointer' }}
+          >
             <div className="sidebar-user">
-              <div className="avatar" style={{ width: '30px', height: '30px', fontSize: '10px' }} onClick={() => navigate('/settings')}>
+              <div className="avatar" style={{ width: '30px', height: '30px', fontSize: '10px' }}>
                 {userInitials}
               </div>
               <div className="sidebar-user-info">
@@ -266,6 +298,7 @@ export default function Layout({ children, onSearchChange }) {
           {children}
         </main>
       </div>
+      <ToastContainer />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useThreatStore } from '../store/threatStore'
 import api from '../services/api'
@@ -10,6 +10,14 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    document.title = "Login | ThreatLens"
+    const metaDesc = document.querySelector('meta[name="description"]')
+    if (metaDesc) {
+      metaDesc.setAttribute('content', 'Log in to ThreatLens to view your vulnerability intelligence dashboard and receive tailored alerts.')
+    }
+  }, [])
 
   const setAuth = useThreatStore((state) => state.setAuth)
   const navigate = useNavigate()

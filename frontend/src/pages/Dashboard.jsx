@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { 
@@ -28,6 +28,8 @@ import {
 import { useThreatStore } from '../store/threatStore'
 import api from '../services/api'
 import Layout from '../components/common/Layout'
+import { TableSkeleton, AlertListSkeleton } from '../components/common/Skeletons'
+import RiskBadge from '../components/common/RiskBadge'
 import './Dashboard.css'
 
 // Donut Chart Component using inline SVG and percentages
@@ -101,6 +103,8 @@ function SortIcon({ col, sortKey, sortDir }) {
 export default function Dashboard() {
   const user = useThreatStore((state) => state.user)
   const token = useThreatStore((state) => state.token)
+  const addToast = useThreatStore((state) => state.addToast)
+  const resetFilters = useThreatStore((state) => state.resetFilters)
   
   const filters = useThreatStore((state) => state.filters)
   const setFilter = useThreatStore((state) => state.setFilter)
@@ -111,6 +115,14 @@ export default function Dashboard() {
   const [activeIndustry, setActiveIndustry] = useState('') // Local or global toggle for industry relevance panel
   const [sortKey, setSortKey] = useState('ai_risk_score')   // active sort column
   const [sortDir, setSortDir] = useState('desc')            // 'asc' | 'desc'
+
+  useEffect(() => {
+    document.title = "Dashboard | ThreatLens"
+    const metaDesc = document.querySelector('meta[name="description"]')
+    if (metaDesc) {
+      metaDesc.setAttribute('content', 'Monitor your active security threats, view vulnerability statistics, and track high-risk exploits.')
+    }
+  }, [])
 
   // Sync tab status with Zustand filters
   const handleTabChange = (tab) => {
@@ -251,13 +263,18 @@ export default function Dashboard() {
   }
 
   const exportReport = () => {
-    alert("Exporting PDF intelligence report...")
+    addToast("Generating PDF intelligence report...", "success")
   }
 
-  const syncFeeds = () => {
-    refetchStats()
-    refetchThreats()
+  const syncFeeds = async () => {
+    try {
+      addToast("Syncing latest threat intelligence feeds...", "success")
+      await Promise.all([refetchStats(), refetchThreats()])
+    } catch {
+      addToast("Failed to synchronize feeds. Please try again.", "error")
+    }
   }
+
 
   if (!user) return null
 
@@ -342,7 +359,13 @@ export default function Dashboard() {
               <ShieldAlert size={12} />
               Critical threats
             </div>
-            <div className="stat-value">{statsLoading ? '...' : stats?.critical_count || 0}</div>
+            <div className="stat-value">
+              {statsLoading ? (
+                <div className="skeleton" style={{ width: '40px', height: '36px', display: 'inline-block', margin: '4px 0' }} />
+              ) : (
+                stats?.critical_count || 0
+              )}
+            </div>
             <div className="stat-delta">
               <span className="delta-up">+4</span>
               <span className="delta-note">vs last week</span>
@@ -354,7 +377,13 @@ export default function Dashboard() {
               <SlidersHorizontal size={12} />
               High severity
             </div>
-            <div className="stat-value">{statsLoading ? '...' : stats?.high_count || 0}</div>
+            <div className="stat-value">
+              {statsLoading ? (
+                <div className="skeleton" style={{ width: '40px', height: '36px', display: 'inline-block', margin: '4px 0' }} />
+              ) : (
+                stats?.high_count || 0
+              )}
+            </div>
             <div className="stat-delta">
               <span className="delta-up">+11</span>
               <span className="delta-note">vs last week</span>
@@ -366,7 +395,13 @@ export default function Dashboard() {
               <Activity size={12} />
               Exploited (CISA)
             </div>
-            <div className="stat-value">{statsLoading ? '...' : stats?.actively_exploited_count || 0}</div>
+            <div className="stat-value">
+              {statsLoading ? (
+                <div className="skeleton" style={{ width: '40px', height: '36px', display: 'inline-block', margin: '4px 0' }} />
+              ) : (
+                stats?.actively_exploited_count || 0
+              )}
+            </div>
             <div className="stat-delta">
               <span className="delta-down">-2</span>
               <span className="delta-note">vs last week</span>
@@ -378,7 +413,13 @@ export default function Dashboard() {
               <Database size={12} />
               Total indexed
             </div>
-            <div className="stat-value">{statsLoading ? '...' : stats?.total_last_7_days || 0}</div>
+            <div className="stat-value">
+              {statsLoading ? (
+                <div className="skeleton" style={{ width: '40px', height: '36px', display: 'inline-block', margin: '4px 0' }} />
+              ) : (
+                stats?.total_last_7_days || 0
+              )}
+            </div>
             <div className="stat-delta">
               <span className="delta-up">+63</span>
               <span className="delta-note">vs last week</span>
@@ -458,9 +499,7 @@ export default function Dashboard() {
             </div>
             <div className="alerts-list" style={{ maxHeight: '220px', overflowY: 'auto' }}>
               {alertsLoading ? (
-                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-3)', fontSize: '12px' }}>
-                  Loading alerts...
-                </div>
+                <AlertListSkeleton count={2} />
               ) : alertsData && alertsData.length > 0 ? (
                 alertsData.slice(0, 10).map((alert) => (
                   <div key={alert.id} className="alert-item" onClick={() => navigate(`/threats/${alert.threat?.id}`)}>
@@ -718,18 +757,13 @@ export default function Dashboard() {
               <tbody>
                 {threatsLoading ? (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-3)' }}>
-                      Scanning threat feed...
+                    <td colSpan="7" style={{ padding: 0 }}>
+                      <TableSkeleton rows={5} cols={7} />
                     </td>
                   </tr>
                 ) : sortedThreats.length > 0 ? (
                   sortedThreats.map((threat) => {
                     const score = threat.ai_risk_score !== null ? threat.ai_risk_score : 5.0
-                    const sevClass = 
-                      score >= 9.0 ? 'sev-critical' :
-                      score >= 7.0 ? 'sev-high' :
-                      score >= 4.0 ? 'sev-medium' : 'sev-low'
-
                     const fillWidth = `${score * 10}%`
                     const fillBg = 
                       score >= 9.0 ? 'var(--red)' :
@@ -739,9 +773,7 @@ export default function Dashboard() {
                     return (
                       <tr key={threat.id} onClick={() => navigate(`/threats/${threat.id}`)}>
                         <td>
-                          <span className={`sev ${sevClass}`}>
-                            {score >= 9.0 ? 'Critical' : score >= 7.0 ? 'High' : score >= 4.0 ? 'Medium' : 'Low'}
-                          </span>
+                          <RiskBadge score={score} showIcon={true} />
                         </td>
                         <td>
                           <div className="score-cell">
@@ -785,8 +817,24 @@ export default function Dashboard() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-3)' }}>
-                      No matching threats found.
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '48px 20px' }}>
+                      <CheckSquare size={36} style={{ color: 'var(--green)', marginBottom: '12px', opacity: 0.8 }} />
+                      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '6px' }}>
+                        No Threats Found 🎉
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-3)', maxWidth: '340px', margin: '0 auto 16px', lineHeight: 1.6 }}>
+                        No threats currently match your selected filters. Either your stack is fully secure, or you can expand the scope by adjusting settings.
+                      </div>
+                      <button 
+                        className="btn btn-ghost" 
+                        onClick={() => {
+                          resetFilters()
+                          handleTabChange('all')
+                        }}
+                        style={{ fontSize: '11px', padding: '6px 12px', height: 'auto', minHeight: 'unset' }}
+                      >
+                        Reset Filter View
+                      </button>
                     </td>
                   </tr>
                 )}

@@ -267,16 +267,17 @@ _Goal: Everything that turns a working project into a winning submission._
 
 ### Day 10 — UI Polish & UX Refinement
 
-- [ ] Audit the entire UI for visual consistency (spacing, font sizes, colors)
-- [ ] Add loading states to every data-fetching component (skeleton screens, not spinners)
-- [ ] Add empty states with helpful CTAs (e.g. "No critical threats this week 🎉")
-- [ ] Add toast notifications for key actions (settings saved, alert preferences updated)
-- [ ] Implement dark mode support (Tailwind `dark:` classes)
-- [ ] Make sure RiskBadge colors are accessible (test with color blindness simulator)
-- [ ] Add a simple landing page (`/`) that explains the product before login
-- [ ] Improve mobile layout — test on 375px viewport
-- [ ] Add `<title>` tags and meta descriptions to each page
-- [ ] Remove all `console.log` statements from production code
+- [x] Audit the entire UI for visual consistency (spacing, font sizes, colors)
+- [x] Add loading states to every data-fetching component (skeleton screens, not spinners)
+- [x] Add empty states with helpful CTAs (e.g. "No critical threats this week 🎉")
+- [x] Add toast notifications for key actions (settings saved, alert preferences updated)
+- [x] Implement dark mode support (Tailwind `dark:` classes)
+- [x] Make sure RiskBadge colors are accessible (test with color blindness simulator)
+- [x] Add a simple landing page (`/`) that explains the product before login
+- [x] Improve mobile layout — test on 375px viewport
+- [x] Add `<title>` tags and meta descriptions to each page
+- [x] Remove all `console.log` statements from production code
+
 
 ---
 
