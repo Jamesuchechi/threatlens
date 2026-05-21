@@ -142,25 +142,25 @@ _Goal: The AI engine is live. The dashboard is built and beautiful. Users can se
 
 **Morning**
 
-- [ ] Sign up for GROQ API, get `GROQ_API_KEY`
-- [ ] Install `GROQ` Python SDK
-- [ ] Write `ai_summarizer.py`:
-  - [ ] Design and finalize the system prompt (see DOCUMENTATION.md section 6)
-  - [ ] `summarize_threat(raw_threat: dict) -> AISummary` function
-  - [ ] Prompt construction: inject CVE description, CVSS, affected products
-  - [ ] Parse and validate JSON response with Pydantic
-  - [ ] Graceful degradation if response is malformed (log warning, return None)
+- [x] Sign up for GROQ API, get `GROQ_API_KEY`
+- [x] Install `GROQ` Python SDK
+- [x] Write `ai_summarizer.py`:
+  - [x] Design and finalize the system prompt (see DOCUMENTATION.md section 6)
+  - [x] `summarize_threat(raw_threat: dict) -> AISummary` function
+  - [x] Prompt construction: inject CVE description, CVSS, affected products
+  - [x] Parse and validate JSON response with Pydantic
+  - [x] Graceful degradation if response is malformed (log warning, return None)
 
 **Afternoon**
 
-- [ ] Add Redis caching to `summarize_threat()`:
-  - [ ] Cache key: `ai:threat:{source_id}`
-  - [ ] TTL: 7 days
-  - [ ] Check cache before calling API
-  - [ ] Store result in cache after API call
-- [ ] Write background worker that drains `queue:ai_processing` Redis queue
-- [ ] Test: manually enqueue 5 CVE IDs, confirm they get summarized and updated in DB
-- [ ] Write `tests/test_ai_summarizer.py` with mocked GROQ API responses
+- [x] Add Redis caching to `summarize_threat()`:
+  - [x] Cache key: `ai:threat:{source_id}`
+  - [x] TTL: 7 days
+  - [x] Check cache before calling API
+  - [x] Store result in cache after API call
+- [x] Write background worker that drains `queue:ai_processing` Redis queue
+- [x] Test: manually enqueue 5 CVE IDs, confirm they get summarized and updated in DB
+- [x] Write `tests/test_ai_summarizer.py` with mocked GROQ API responses
 
 **End of Day 5 checkpoint:** 10+ threats in the database have AI summaries, recommendations, industry tags, and risk scores populated.
 
@@ -170,21 +170,21 @@ _Goal: The AI engine is live. The dashboard is built and beautiful. Users can se
 
 **Morning**
 
-- [ ] Write `risk_scorer.py` with the composite scoring formula (see DOCUMENTATION.md section 7)
-- [ ] Integrate risk scorer into AI processing pipeline: score is computed after AI returns
-- [ ] Update `GET /threats` to sort by `ai_risk_score DESC` by default
-- [ ] Confirm severity bucketing logic works (critical/high/medium/low)
+- [x] Write `risk_scorer.py` with the composite scoring formula (see DOCUMENTATION.md section 7)
+- [x] Integrate risk scorer into AI processing pipeline: score is computed after AI returns
+- [x] Update `GET /threats` to sort by `ai_risk_score DESC` by default
+- [x] Confirm severity bucketing logic works (critical/high/medium/low)
 
 **Afternoon**
 
-- [ ] Write `alert_dispatcher.py`:
-  - [ ] `match_users_to_threat(threat_id)` — query users by industry + tech stack overlap
-  - [ ] `create_alert_records(user_ids, threat_id, reason)` — bulk insert
-  - [ ] `dispatch_email_alerts(alerts)` — SMTP via `aiosmtplib` (use Gmail SMTP for demo)
-  - [ ] `dispatch_webhook_alerts(alerts)` — POST JSON to webhook URLs
-- [ ] Integrate alert dispatch into AI processing pipeline (runs after scoring)
-- [ ] Implement `GET /alerts` endpoint (authenticated)
-- [ ] Implement `POST /alerts/preferences` endpoint
+- [x] Write `alert_dispatcher.py`:
+  - [x] `match_users_to_threat(threat_id)` — query users by industry + tech stack overlap
+  - [x] `create_alert_records(user_ids, threat_id, reason)` — bulk insert
+  - [x] `dispatch_email_alerts(alerts)` — SMTP via `aiosmtplib` (use Gmail SMTP for demo)
+  - [x] `dispatch_webhook_alerts(alerts)` — POST JSON to webhook URLs
+- [x] Integrate alert dispatch into AI processing pipeline (runs after scoring)
+- [x] Implement `GET /alerts` endpoint (authenticated)
+- [x] Implement `POST /alerts/preferences` endpoint
 
 **End of Day 6 checkpoint:** After ingestion + AI processing, users with matching industry/tech stack receive alerts. Can verify via database `alerts` table.
 
@@ -194,22 +194,22 @@ _Goal: The AI engine is live. The dashboard is built and beautiful. Users can se
 
 **Morning**
 
-- [ ] Build `StatCards.jsx` component — 4 cards: Total Threats (7d), Critical Count, Actively Exploited, Avg Risk Score
-- [ ] Build `TrendChart.jsx` — 7-day area chart with Recharts, colored by severity
-- [ ] Connect both to real API data via React Query
-- [ ] Build `RiskBadge.jsx` — reusable severity badge component with correct colors
+- [x] Build `StatCards.jsx` component — 4 cards: Total Threats (7d), Critical Count, Actively Exploited, Avg Risk Score
+- [x] Build `TrendChart.jsx` — 7-day area chart with Recharts, colored by severity
+- [x] Connect both to real API data via React Query
+- [x] Build `RiskBadge.jsx` — reusable severity badge component with correct colors
 
 **Afternoon**
 
-- [ ] Build `ThreatTable.jsx`:
-  - [ ] Columns: Severity, Title, Source, Published, Risk Score, Patch Available, Detail link
-  - [ ] Sortable columns (click header)
-  - [ ] Row click → navigate to `/threats/{id}`
-  - [ ] Loading skeleton state
-  - [ ] Empty state illustration
-- [ ] Build filter bar above table: Severity dropdown, Source dropdown, Days range, Search input
-- [ ] Wire filters to Zustand store → refetch query on filter change
-- [ ] Make the full dashboard page responsive (mobile-friendly)
+- [x] Build `ThreatTable.jsx`:
+  - [x] Columns: Severity, Title, Source, Published, Risk Score, Patch Available, Detail link
+  - [x] Sortable columns (click header)
+  - [x] Row click → navigate to `/threats/{id}`
+  - [x] Loading skeleton state
+  - [x] Empty state illustration
+- [x] Build filter bar above table: Severity dropdown, Source dropdown, Days range, Search input
+- [x] Wire filters to Zustand store → refetch query on filter change
+- [x] Make the full dashboard page responsive (mobile-friendly)
 
 **End of Day 7 checkpoint:** Dashboard shows real, live data. Can filter and sort the threat table. Trend chart renders correctly.
 
@@ -219,19 +219,19 @@ _Goal: The AI engine is live. The dashboard is built and beautiful. Users can se
 
 **Morning**
 
-- [ ] Build `SummaryPanel.jsx` — the hero card showing AI plain-English summary; prominent, visually distinct
-- [ ] Build `RecommendationList.jsx` — numbered checklist of AI recommendations; each item has a checkbox for visual interaction
-- [ ] Build `TechDetails.jsx` — collapsible section with CVSS score, vector string, CVE ID, CWE IDs, affected products
-- [ ] Connect all to `GET /threats/{id}` API endpoint
-- [ ] Add "Copy CVE ID" button, "View patch" external link
+- [x] Build `SummaryPanel.jsx` — the hero card showing AI plain-English summary; prominent, visually distinct
+- [x] Build `RecommendationList.jsx` — numbered checklist of AI recommendations; each item has a checkbox for visual interaction
+- [x] Build `TechDetails.jsx` — collapsible section with CVSS score, vector string, CVE ID, CWE IDs, affected products
+- [x] Connect all to `GET /threats/{id}` API endpoint
+- [x] Add "Copy CVE ID" button, "View patch" external link
 
 **Afternoon**
 
-- [ ] Build `AlertFeed.jsx` page — list of user's personal alerts, sorted by recency
-- [ ] Build `AlertItem.jsx` — shows threat title, severity, triggered time, reason string
-- [ ] Build `UserSettings.jsx` — form to update industry, tech stack, alert preferences
-- [ ] Wire settings form to `POST /alerts/preferences` endpoint
-- [ ] Add navbar with links to Dashboard, Alerts, Settings, and logout
+- [x] Build `AlertFeed.jsx` page — list of user's personal alerts, sorted by recency
+- [x] Build `AlertItem.jsx` — shows threat title, severity, triggered time, reason string
+- [x] Build `UserSettings.jsx` — form to update industry, tech stack, alert preferences
+- [x] Wire settings form to `POST /alerts/preferences` endpoint
+- [x] Add navbar with links to Dashboard, Alerts, Settings, and logout
 
 **End of Day 8 checkpoint:** Can click any threat in the table to see its full detail page with AI summary and recommendations. Alert feed shows personal alerts.
 
@@ -241,19 +241,19 @@ _Goal: The AI engine is live. The dashboard is built and beautiful. Users can se
 
 **Morning**
 
-- [ ] Build `LoginPage.jsx` and `RegisterPage.jsx`
-- [ ] Wire to `/auth/login` and `/auth/register` endpoints
-- [ ] Store JWT in `localStorage`, attach to all API requests via Axios interceptor
-- [ ] Implement protected route wrapper — redirect to login if no valid token
-- [ ] Handle token expiry gracefully (catch 401, clear token, redirect to login)
+- [x] Build `LoginPage.jsx` and `RegisterPage.jsx`
+- [x] Wire to `/auth/login` and `/auth/register` endpoints
+- [x] Store JWT in `localStorage`, attach to all API requests via Axios interceptor
+- [x] Implement protected route wrapper — redirect to login if no valid token
+- [x] Handle token expiry gracefully (catch 401, clear token, redirect to login)
 
 **Afternoon**
 
-- [ ] End-to-end integration test: register → log in → view dashboard → click threat → check detail page → check alerts
-- [ ] Fix any bugs found in integration testing
-- [ ] Verify the app works correctly with 100+ threats in the database
-- [ ] Add error boundaries in React for graceful frontend error handling
-- [ ] Confirm the full pipeline works: scheduler → ingestion → AI processing → alerts dispatched
+- [x] End-to-end integration test: register → log in → view dashboard → click threat → check detail page → check alerts
+- [x] Fix any bugs found in integration testing
+- [x] Verify the app works correctly with 100+ threats in the database
+- [x] Add error boundaries in React for graceful frontend error handling
+- [x] Confirm the full pipeline works: scheduler → ingestion → AI processing → alerts dispatched
 
 **End of Day 9 checkpoint:** The full application works end-to-end. A new user can register, see live threats with AI summaries, and receive alerts matching their profile.
 

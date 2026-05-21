@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { 
@@ -6,7 +7,9 @@ import {
   ExternalLink,
   Cpu,
   Activity,
-  CheckCircle
+  CheckCircle,
+  Copy,
+  Check
 } from 'lucide-react'
 import { useThreatStore } from '../store/threatStore'
 import api from '../services/api'
@@ -18,6 +21,7 @@ export default function ThreatDetail() {
   const user = useThreatStore((state) => state.user)
   const token = useThreatStore((state) => state.token)
   const navigate = useNavigate()
+  const [copied, setCopied] = useState(false)
 
   // Redirect if not authenticated
   if (!token || !user) {
@@ -101,8 +105,27 @@ export default function ThreatDetail() {
             {/* Header info */}
             <div className="detail-header">
               <div className="detail-meta">
-                <span className="detail-source-id">{threat.source_id}</span>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="detail-source-id">{threat.source_id}</span>
+                  <button
+                    title="Copy CVE ID"
+                    onClick={() => {
+                      navigator.clipboard.writeText(threat.source_id)
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 2000)
+                    }}
+                    style={{
+                      background: 'none', border: '1px solid var(--border)', borderRadius: '4px',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px',
+                      padding: '3px 8px', color: copied ? 'var(--green)' : 'var(--text-3)',
+                      fontSize: '10px', fontFamily: 'var(--mono)', transition: 'color 0.2s'
+                    }}
+                  >
+                    {copied ? <Check size={10} /> : <Copy size={10} />}
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
                   <span className="source-badge">{threat.source}</span>
                   {threat.is_actively_exploited && (
                     <span className="severity-badge sev-critical">Actively Exploited</span>

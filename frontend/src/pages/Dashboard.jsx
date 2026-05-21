@@ -11,7 +11,10 @@ import {
   Layers, 
   FileText,
   Database,
-  SlidersHorizontal
+  SlidersHorizontal,
+  ChevronUp,
+  ChevronDown,
+  ChevronsUpDown
 } from 'lucide-react'
 import { 
   ResponsiveContainer, 
@@ -86,6 +89,15 @@ function DonutChart({ critical, high, medium, low }) {
   )
 }
 
+// Sort indicator icon — standalone component so it is not re-created on every render
+function SortIcon({ col, sortKey, sortDir }) {
+  if (sortKey !== col)
+    return <ChevronsUpDown size={11} style={{ opacity: 0.35, marginLeft: 4, flexShrink: 0 }} />
+  return sortDir === 'desc'
+    ? <ChevronDown size={11} style={{ color: 'var(--blue)', marginLeft: 4, flexShrink: 0 }} />
+    : <ChevronUp   size={11} style={{ color: 'var(--blue)', marginLeft: 4, flexShrink: 0 }} />
+}
+
 export default function Dashboard() {
   const user = useThreatStore((state) => state.user)
   const token = useThreatStore((state) => state.token)
@@ -97,6 +109,8 @@ export default function Dashboard() {
   const [page, setPage] = useState(1)
   const [activeTab, setActiveTab] = useState('all') // 'all', 'critical', 'exploited', 'nopatch'
   const [activeIndustry, setActiveIndustry] = useState('') // Local or global toggle for industry relevance panel
+  const [sortKey, setSortKey] = useState('ai_risk_score')   // active sort column
+  const [sortDir, setSortDir] = useState('desc')            // 'asc' | 'desc'
 
   // Sync tab status with Zustand filters
   const handleTabChange = (tab) => {
@@ -120,6 +134,16 @@ export default function Dashboard() {
       setFilter('exploited', null)
       // The API doesn't support patch filter, but we filter client-side or map it
       setFilter('severity', 'all')
+    }
+  }
+
+  // Column sort handler — toggles direction on same key, resets to desc on new key
+  const handleSort = (key) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'desc' ? 'asc' : 'desc')
+    } else {
+      setSortKey(key)
+      setSortDir('desc')
     }
   }
 
@@ -241,9 +265,46 @@ export default function Dashboard() {
   const totalThreats = threatsData?.total || 0
 
   // Filter client side only for 'nopatch' tab
-  const displayedThreats = activeTab === 'nopatch' 
+  const filteredThreats = activeTab === 'nopatch'
     ? threats.filter(t => !t.patch_available)
     : threats
+
+  // Client-side column sort applied on top of API result
+  const sortedThreats = [...filteredThreats].sort((a, b) => {
+    let aVal, bVal
+    switch (sortKey) {
+      case 'ai_risk_score':
+        aVal = a.ai_risk_score ?? -1
+        bVal = b.ai_risk_score ?? -1
+        break
+      case 'title':
+        aVal = (a.title || '').toLowerCase()
+        bVal = (b.title || '').toLowerCase()
+        break
+      case 'source':
+        aVal = (a.source || '').toLowerCase()
+        bVal = (b.source || '').toLowerCase()
+        break
+      case 'published_at':
+        aVal = a.published_at ? new Date(a.published_at).getTime() : 0
+        bVal = b.published_at ? new Date(b.published_at).getTime() : 0
+        break
+      case 'patch_available':
+        // true (patch exists) sorts after false (no patch) in desc
+        aVal = a.patch_available ? 1 : 0
+        bVal = b.patch_available ? 1 : 0
+        break
+      case 'is_actively_exploited':
+        aVal = a.is_actively_exploited ? 1 : 0
+        bVal = b.is_actively_exploited ? 1 : 0
+        break
+      default:
+        return 0
+    }
+    if (aVal < bVal) return sortDir === 'desc' ? 1 : -1
+    if (aVal > bVal) return sortDir === 'desc' ? -1 : 1
+    return 0
+  })
 
   // Sparkline data generation for data sources
   const mockSparklineData = [12, 19, 3, 5, 2, 3, 20]
@@ -596,13 +657,62 @@ export default function Dashboard() {
             <table className="threat-table">
               <thead>
                 <tr>
-                  <th style={{ width: '90px' }}>Severity</th>
-                  <th style={{ width: '80px' }}>Risk Score</th>
-                  <th>Vulnerability Title</th>
-                  <th style={{ width: '100px' }}>Source</th>
-                  <th style={{ width: '90px' }}>Published</th>
-                  <th style={{ width: '80px' }}>Patch</th>
-                  <th style={{ width: '100px' }}>Status</th>
+                  <th
+                    style={{ width: '90px', cursor: 'pointer', userSelect: 'none' }}
+                    onClick={() => handleSort('ai_risk_score')}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      Severity <SortIcon col="ai_risk_score" sortKey={sortKey} sortDir={sortDir} />
+                    </span>
+                  </th>
+                  <th
+                    style={{ width: '80px', cursor: 'pointer', userSelect: 'none' }}
+                    onClick={() => handleSort('ai_risk_score')}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      Risk Score <SortIcon col="ai_risk_score" sortKey={sortKey} sortDir={sortDir} />
+                    </span>
+                  </th>
+                  <th
+                    style={{ cursor: 'pointer', userSelect: 'none' }}
+                    onClick={() => handleSort('title')}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      Vulnerability Title <SortIcon col="title" sortKey={sortKey} sortDir={sortDir} />
+                    </span>
+                  </th>
+                  <th
+                    style={{ width: '100px', cursor: 'pointer', userSelect: 'none' }}
+                    onClick={() => handleSort('source')}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      Source <SortIcon col="source" sortKey={sortKey} sortDir={sortDir} />
+                    </span>
+                  </th>
+                  <th
+                    style={{ width: '90px', cursor: 'pointer', userSelect: 'none' }}
+                    onClick={() => handleSort('published_at')}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      Published <SortIcon col="published_at" sortKey={sortKey} sortDir={sortDir} />
+                    </span>
+                  </th>
+                  <th
+                    style={{ width: '80px', cursor: 'pointer', userSelect: 'none' }}
+                    onClick={() => handleSort('patch_available')}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      Patch <SortIcon col="patch_available" sortKey={sortKey} sortDir={sortDir} />
+                    </span>
+                  </th>
+                  <th
+                    style={{ width: '100px', cursor: 'pointer', userSelect: 'none' }}
+                    onClick={() => handleSort('is_actively_exploited')}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      Status <SortIcon col="is_actively_exploited" sortKey={sortKey} sortDir={sortDir} />
+                    </span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -612,8 +722,8 @@ export default function Dashboard() {
                       Scanning threat feed...
                     </td>
                   </tr>
-                ) : displayedThreats.length > 0 ? (
-                  displayedThreats.map((threat) => {
+                ) : sortedThreats.length > 0 ? (
+                  sortedThreats.map((threat) => {
                     const score = threat.ai_risk_score !== null ? threat.ai_risk_score : 5.0
                     const sevClass = 
                       score >= 9.0 ? 'sev-critical' :
@@ -688,7 +798,7 @@ export default function Dashboard() {
           {threatsData && threatsData.total > 0 && (
             <div className="pagination-container">
               <span className="pagination-info">
-                Showing <strong>{displayedThreats.length}</strong> of <strong>{threatsData.total}</strong> threats
+                Showing <strong>{sortedThreats.length}</strong> of <strong>{threatsData.total}</strong> threats
               </span>
               <div style={{ display: 'flex', gap: '6px' }}>
                 <button 

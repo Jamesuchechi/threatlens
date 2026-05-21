@@ -147,7 +147,7 @@ export default function Layout({ children, onSearchChange }) {
             <RefreshCw size={16} />
           </button>
           
-          <button className="topbar-icon-btn" title="Notifications" onClick={() => navigate('/dashboard')}>
+          <button className="topbar-icon-btn" title="Alert Feed" onClick={() => navigate('/alerts')}>
             <Bell size={16} />
             {alertsCount > 0 && <span className="notif-dot"></span>}
           </button>
@@ -183,18 +183,14 @@ export default function Layout({ children, onSearchChange }) {
             {criticalCount > 0 && <span className="nav-badge">{criticalCount}</span>}
           </Link>
           
-          <div 
-            className="nav-item" 
-            style={{ cursor: 'pointer' }}
-            onClick={() => {
-              // Toggle filter to monstack or show a notification
-              setFilter('severity', 'critical')
-            }}
+          <Link
+            to="/alerts"
+            className={`nav-item ${location.pathname === '/alerts' ? 'active' : ''}`}
           >
             <AlertOctagon size={15} />
             Alerts
             {alertsCount > 0 && <span className="nav-badge" style={{ background: 'rgba(232,140,42,0.15)', color: 'var(--amber)', border: '1px solid rgba(232,140,42,0.25)' }}>{alertsCount}</span>}
-          </div>
+          </Link>
 
           <div className="nav-item" onClick={() => alert("Real-time network security monitoring is currently in beta.")}>
             <Activity size={15} />
