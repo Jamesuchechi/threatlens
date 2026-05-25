@@ -104,7 +104,6 @@ _Goal: A working backend that ingests real threat data and stores it. No AI yet.
 **End of Day 3 checkpoint:** Running ingestion manually populates 50–200 real CVEs in the database. `GET /threats` returns them via API.
 
 ---
-
 ### Day 4 — AbuseIPDB + Polish + Frontend Bootstrap
 
 **Morning**

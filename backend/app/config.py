@@ -36,3 +36,8 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
+# Normalize Upstash Redis URL to use secure TLS/SSL (rediss://)
+if settings.REDIS_URL.startswith("redis://") and "upstash.io" in settings.REDIS_URL:
+    settings.REDIS_URL = settings.REDIS_URL.replace("redis://", "rediss://", 1)
+
+
