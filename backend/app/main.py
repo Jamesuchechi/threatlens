@@ -23,10 +23,22 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="ThreatLens API", lifespan=lifespan)
 
-# Add CORS middleware to support frontend communication
+from app.config import settings
+
+# Configure CORS origins
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
+if settings.FRONTEND_URL:
+    origins.append(settings.FRONTEND_URL)
+
+# Strip trailing slashes to avoid Starlette validation issues
+origins = [origin.rstrip("/") for origin in origins if origin]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

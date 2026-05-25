@@ -19,7 +19,7 @@ async def start_ai_worker():
     
     try:
         print(f"AI WORKER: Connecting to Redis URL: {settings.REDIS_URL}", flush=True)
-        r = aioredis.from_url(settings.REDIS_URL, socket_timeout=5)
+        r = aioredis.from_url(settings.REDIS_URL, socket_timeout=30)
         print("AI WORKER: Redis connection initialized, entering pop loop...", flush=True)
     except Exception as init_err:
         print(f"AI WORKER CRITICAL: Failed to initialize Redis connection: {init_err}", flush=True)
